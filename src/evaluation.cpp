@@ -521,8 +521,8 @@ Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
 Value ListFunc::evalRator(const std::vector<Value> &args) { // list function
     //TODO: To complete the list logic
     Value list=NullV();
-    for(auto it:args){
-        list=PairV(it,list);
+    for(int i=args.size()-1;i>=0;i--){
+        list=PairV(args[i],list);
     }
     return list;
 }
