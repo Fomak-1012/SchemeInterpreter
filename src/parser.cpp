@@ -268,7 +268,7 @@ Expr List::parse(Assoc &env) {
                 //TODO: TO COMPLETE THE LOGIC
                 throw RuntimeError("Unknown primitives: "+op);
                 // throw RuntimeError("没得这个函数,你再看看呢: "+op);
-            }
+            } 
         }
         //预留关键字这一块
         if (reserved_words.count(op) != 0) {
@@ -289,8 +289,15 @@ Expr List::parse(Assoc &env) {
                         //注意这里可能有报错
                         parms.push_back(sym->s);
                     }
+                    if(stxs.size()>3){
+                        vector<Expr> body;
+                        for(int i=2;i<stxs.size();i++)
+                            body.push_back(stxs[i]->parse(env));
+                        return Expr(new Lambda(parms,Expr(new Begin(body))));
+                    }
                     return Expr(new Lambda(parms,stxs[2]->parse(env)));
                 }    
+                
                 case E_QUOTE:{
                     if(stxs.size()!=2){
                         throw RuntimeError("Wrong number of Quote");
@@ -307,6 +314,92 @@ Expr List::parse(Assoc &env) {
                         exprs.push_back(stxs[i]->parse(env));
                     return Expr(new Begin(exprs));
                 }
+                case E_COND:{
+                vector<vector<Expr>> clauses;
+                for(int i = 1; i < stxs.size(); i++) {
+                    List *clause = dynamic_cast<List*>(stxs[i].get());
+                    if (!clause || clause->stxs.empty()) {
+                        throw RuntimeError("Invalid cond clause");
+                    }
+                    vector<Expr> clause_exprs;
+                    for(auto &expr : clause->stxs)
+                        clause_exprs.push_back(expr->parse(env));                        
+                        clauses.push_back(clause_exprs);
+                }
+                    return Expr(new Cond(clauses));
+            }
+            case E_LET:{
+                if(stxs.size() < 3) {
+                        throw RuntimeError("Wrong number of arguments for let");
+                    }
+                    List *bindings = dynamic_cast<List*>(stxs[1].get());
+                    if (!bindings) {
+                        throw RuntimeError("Let bindings must be a list");
+                    }
+                    vector<pair<string, Expr>> let_bindings;
+                    for(auto &binding : bindings->stxs) {
+                        List *binding_pair = dynamic_cast<List*>(binding.get());
+                        if (!binding_pair || binding_pair->stxs.size() != 2) {
+                            throw RuntimeError("Invalid binding in let");
+                        }
+                        SymbolSyntax *var = dynamic_cast<SymbolSyntax*>(binding_pair->stxs[0].get());
+                        if (!var) {
+                            throw RuntimeError("Binding variable must be a symbol");
+                        }
+                        let_bindings.push_back({var->s, binding_pair->stxs[1]->parse(env)});
+                    }
+                    // Handle multiple expressions in let body using Begin
+                    if (stxs.size() > 3) {
+                        vector<Expr> body_exprs;
+                        for(size_t i = 2; i < stxs.size(); i++) {
+                            body_exprs.push_back(stxs[i]->parse(env));
+                        }
+                        return Expr(new Let(let_bindings, Expr(new Begin(body_exprs))));
+                    } else {
+                        return Expr(new Let(let_bindings, stxs[2]->parse(env)));
+                    }
+            }
+            case E_LETREC:{
+                if(stxs.size() < 3) {
+                        throw RuntimeError("Wrong number of arguments for letrec");
+                    }
+                    List *bindings = dynamic_cast<List*>(stxs[1].get());
+                    if (!bindings) {
+                        throw RuntimeError("Letrec bindings must be a list");
+                    }
+                    vector<pair<string, Expr>> letrec_bindings;
+                    for(auto &binding : bindings->stxs) {
+                        List *binding_pair = dynamic_cast<List*>(binding.get());
+                        if (!binding_pair || binding_pair->stxs.size() != 2) {
+                            throw RuntimeError("Invalid binding in letrec");
+                        }
+                        SymbolSyntax *var = dynamic_cast<SymbolSyntax*>(binding_pair->stxs[0].get());
+                        if (!var) {
+                            throw RuntimeError("Binding variable must be a symbol");
+                        }
+                        letrec_bindings.push_back({var->s, binding_pair->stxs[1]->parse(env)});
+                    }
+                    // Handle multiple expressions in letrec body using Begin
+                    if (stxs.size() > 3) {
+                        vector<Expr> body_exprs;
+                        for(size_t i = 2; i < stxs.size(); i++) {
+                            body_exprs.push_back(stxs[i]->parse(env));
+                        }
+                        return Expr(new Letrec(letrec_bindings, Expr(new Begin(body_exprs))));
+                    } else {
+                        return Expr(new Letrec(letrec_bindings, stxs[2]->parse(env)));
+                    }
+            }
+            case E_SET:{
+                if(stxs.size() != 3) {
+                        throw RuntimeError("Wrong number of arguments for set!");
+                    }
+                    SymbolSyntax *name = dynamic_cast<SymbolSyntax*>(stxs[1].get());
+                    if (!name) {
+                        throw RuntimeError("set! must be followed by a symbol");
+                    }
+                    return Expr(new Set(name->s, stxs[2]->parse(env)));
+            }
                 default:
                     throw RuntimeError("Unknown reserved word: " + op);
             }

@@ -524,6 +524,9 @@ Value ListFunc::evalRator(const std::vector<Value> &args) { // list function
     for(int i=args.size()-1;i>=0;i--){
         list=PairV(args[i],list);
     }
+    // for(auto &it:args){
+    //     list=PairV(it,list);
+    // }
     return list;
 }
 
@@ -776,7 +779,7 @@ Value Letrec::eval(Assoc &env) {
     for(auto &it:bind)
         newenv=extend(it.first,VoidV(),newenv);
     for(auto &it:bind){
-        Value val=it.second->eval(env);
+        Value val=it.second->eval(newenv);
         modify(it.first,val,newenv);
 
     }
