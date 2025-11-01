@@ -432,7 +432,7 @@ int mycompareNumericValues(const Value &v1, const Value &v2) {
 }
 Value Less::evalRator(const Value &rand1, const Value &rand2) { // <
     //TODO: To complete the less logic
-    int result=mycompareNumericValues(rand1,rand2);
+    int result=compareNumericValues(rand1,rand2);
     if(result==-1)return BooleanV(true);
     if(result==0||result==1) return BooleanV(false);
     throw(RuntimeError("Wrong typename"));
@@ -440,7 +440,7 @@ Value Less::evalRator(const Value &rand1, const Value &rand2) { // <
 
 Value LessEq::evalRator(const Value &rand1, const Value &rand2) { // <=
     //TODO: To complete the lesseq logic
-    int result=mycompareNumericValues(rand1,rand2);
+    int result=compareNumericValues(rand1,rand2);
     if(result==-1||result==0)return BooleanV(true);
     if(result==1) return BooleanV(false);
     throw(RuntimeError("Wrong typename"));
@@ -458,7 +458,7 @@ Value Equal::evalRator(const Value &rand1, const Value &rand2) { // =
     //     Symbol *s2 = dynamic_cast<Symbol*>(rand2.get());
     //     return BooleanV(s1->s == s2->s);
     // }
-    int result=mycompareNumericValues(rand1,rand2);
+    int result=compareNumericValues(rand1,rand2);
     if(result==0)return BooleanV(true);
     if(result==1||result==-1) return BooleanV(false);
     throw(RuntimeError("Wrong typename"));
@@ -466,7 +466,7 @@ Value Equal::evalRator(const Value &rand1, const Value &rand2) { // =
 
 Value GreaterEq::evalRator(const Value &rand1, const Value &rand2) { // >=
     //TODO: To complete the greatereq logic
-    int result=mycompareNumericValues(rand1,rand2);
+    int result=compareNumericValues(rand1,rand2);
     if(result==0||result==1)return BooleanV(true);
     if(result==-1) return BooleanV(false);
     throw(RuntimeError("Wrong typename"));
@@ -474,7 +474,7 @@ Value GreaterEq::evalRator(const Value &rand1, const Value &rand2) { // >=
 
 Value Greater::evalRator(const Value &rand1, const Value &rand2) { // >
     //TODO: To complete the greater logic
-    int result=mycompareNumericValues(rand1,rand2);
+    int result=compareNumericValues(rand1,rand2);
     if(result==1)return BooleanV(true);
     if(result==0||result==-1) return BooleanV(false);
     throw(RuntimeError("Wrong typename"));
@@ -647,7 +647,7 @@ Value Begin::eval(Assoc &e) {
     return res;
 }
 
-Value conv(const Syntax& s){
+Value conv(const Syntax& s) {
     if (auto num = dynamic_cast<Number*>(s.get())) {
         return IntegerV(num->n);
     } else if (auto rat = dynamic_cast<RationalSyntax*>(s.get())) {
@@ -662,15 +662,11 @@ Value conv(const Syntax& s){
         return BooleanV(false);
     } else if (auto lis = dynamic_cast<List*>(s.get())) {
         if (lis->stxs.empty()) return NullV();
-        Value head = conv(lis->stxs[0]);
-        Value tail = NullV();
-        if (lis->stxs.size() > 1) {
-            std::vector<Syntax> rest(lis->stxs.begin() + 1, lis->stxs.end());
-            List *rest_list = new List();
-            rest_list->stxs = rest;
-            tail = conv(Syntax(rest_list));
+        Value result = NullV();
+        for(int i = lis->stxs.size() - 1; i >= 0; i--) {
+            result = PairV(conv(lis->stxs[i]), result);
         }
-        return PairV(head, tail);
+        return result;
     }
     throw RuntimeError("Invalid quoted syntax");
 }
@@ -749,30 +745,30 @@ Value Lambda::eval(Assoc &env) {
     return ProcedureV(x,e,env);
 }
 
-Value Apply::eval(Assoc &e) {
-    Value proval = rator->eval(e);
-    if (proval->v_type != V_PROC) {
+Value Apply::eval(Assoc &env) {
+    Value proc_val = rator->eval(env);
+    if (proc_val->v_type != V_PROC) {
         throw RuntimeError("Attempt to apply a non-procedure");
     }
 
-    Procedure* clos_ptr = dynamic_cast<Procedure*>(proval.get());
+    Procedure* proc = dynamic_cast<Procedure*>(proc_val.get());
+    std::vector<Value> arg_vals;
     
-    std::vector<Value> args;
-    for(auto it : rand) {
-        args.push_back(it->eval(e));
+    for(auto &arg_expr : rand) {
+        arg_vals.push_back(arg_expr->eval(env));
     }
     
-    if (args.size() != clos_ptr->parameters.size()) {
+    if (arg_vals.size() != proc->parameters.size()) {
         throw RuntimeError("Wrong number of arguments");
     }
     
-    // 使用闭包保存的环境，确保参数名遮蔽外层同名变量
-    Assoc param_env = clos_ptr->env;
-    for(int i = 0; i < args.size(); i++) {
-        param_env = extend(clos_ptr->parameters[i], args[i], param_env);
+    // 扩展闭包的环境
+    Assoc new_env = proc->env;
+    for(size_t i = 0; i < arg_vals.size(); i++) {
+        new_env = extend(proc->parameters[i], arg_vals[i], new_env);
     }
-
-    return clos_ptr->e->eval(param_env);
+    
+    return proc->e->eval(new_env);
 }
 
 

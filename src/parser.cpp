@@ -129,45 +129,30 @@ Expr List::parse(Assoc &env) {
             } else if (op_type == E_LIST) {
                 return Expr(new ListFunc(parameters));
             } else if (op_type == E_LT) {
-                //TODO: TO COMPLETE THE LOGIC
-                if (parameters.size() == 2) {
-                    return Expr(new Less(parameters[0], parameters[1])); 
-                } else {
-                    return Expr(new LessVar(parameters));
-                    // throw RuntimeError("Wrong number of arguments for <");
+                if (parameters.size() < 2) {
+                    throw RuntimeError("Wrong number of arguments for <");
                 }
+                return Expr(new LessVar(parameters));
             } else if (op_type == E_LE) {
-                //TODO: TO COMPLETE THE LOGIC
-                if (parameters.size() == 2) {
-                    return Expr(new LessEq(parameters[0], parameters[1])); 
-                } else {
-                    return Expr(new LessEqVar(parameters));
-                    // throw RuntimeError("Wrong number of arguments for <=");
+                if (parameters.size() < 2) {
+                    throw RuntimeError("Wrong number of arguments for <=");
                 }
+                return Expr(new LessEqVar(parameters));
             } else if (op_type == E_EQ) {
-                //TODO: TO COMPLETE THE LOGIC
-                if (parameters.size() == 2) {
-                    return Expr(new Equal(parameters[0], parameters[1])); 
-                } else {
-                    return Expr(new EqualVar(parameters));
-                    // throw RuntimeError("Wrong number of arguments for =");
+                if (parameters.size() < 2) {
+                    throw RuntimeError("Wrong number of arguments for =");
                 }
+                return Expr(new EqualVar(parameters));
             } else if (op_type == E_GE) {
-                //TODO: TO COMPLETE THE LOGIC
-                if (parameters.size() == 2) {
-                    return Expr(new GreaterEq(parameters[0], parameters[1])); 
-                } else {
-                    return Expr(new GreaterEqVar(parameters));
-                    // throw RuntimeError("Wrong number of arguments for >=");
+                if (parameters.size() < 2) {
+                    throw RuntimeError("Wrong number of arguments for >=");
                 }
+                return Expr(new GreaterEqVar(parameters));
             } else if (op_type == E_GT) {
-                //TODO: TO COMPLETE THE LOGIC
-                if (parameters.size() == 2) {
-                    return Expr(new Greater(parameters[0], parameters[1])); 
-                } else {
-                    return Expr(new GreaterVar(parameters));
-                    // throw RuntimeError("Wrong number of arguments for >");
+                if (parameters.size() < 2) {
+                    throw RuntimeError("Wrong number of arguments for >");
                 }
+                return Expr(new GreaterVar(parameters));
             } else if (op_type == E_AND) {
                 return Expr(new AndVar(parameters));
             } else if (op_type == E_OR) {
