@@ -679,23 +679,27 @@ Value Quote::eval(Assoc& e) {
 Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     //TODO: To complete the and logic
     if(rands.empty())return BooleanV(true);
+    Value last=BooleanV(true);
     for(auto &it:rands){
         Value val=it->eval(e);
         if(val->v_type==V_BOOL&&!dynamic_cast<Boolean*>(val.get())->b)
             return BooleanV(false);
+        last=val;
     }
-    return BooleanV(true);
+    return last;
 }
 
 Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
     //TODO: To complete the or logic
     if(rands.empty())return BooleanV(false);
+    Value last=BooleanV(false);
     for(auto &it:rands){
         Value val=it->eval(e);
         if(val->v_type==V_BOOL&&dynamic_cast<Boolean*>(val.get())->b)
             return BooleanV(true);
+        last=val;
     }
-    return BooleanV(false);
+    return last;
 }
 
 Value Not::evalRator(const Value &rand) { // not
