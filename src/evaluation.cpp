@@ -427,7 +427,7 @@ int mycompareNumericValues(const Value &v1, const Value &v2) {
         int right = r2->numerator * r1->denominator;
         return (left < right) ? -1 : (left > right) ? 1 : 0;
     }
-    else return 2;
+    return 2;
     // throw RuntimeError("Wrong typename in numeric comparison");
 }
 Value Less::evalRator(const Value &rand1, const Value &rand2) { // <
@@ -448,6 +448,16 @@ Value LessEq::evalRator(const Value &rand1, const Value &rand2) { // <=
 
 Value Equal::evalRator(const Value &rand1, const Value &rand2) { // =
     //TODO: To complete the equal logic
+    if (rand1->v_type == V_STRING && rand2->v_type == V_STRING) {
+        String *s1 = dynamic_cast<String*>(rand1.get());
+        String *s2 = dynamic_cast<String*>(rand2.get());
+        return BooleanV(s1->s == s2->s);
+    }
+    if (rand1->v_type == V_SYM && rand2->v_type == V_SYM) {
+        Symbol *s1 = dynamic_cast<Symbol*>(rand1.get());
+        Symbol *s2 = dynamic_cast<Symbol*>(rand2.get());
+        return BooleanV(s1->s == s2->s);
+    }
     int result=mycompareNumericValues(rand1,rand2);
     if(result==0)return BooleanV(true);
     if(result==1||result==-1) return BooleanV(false);
