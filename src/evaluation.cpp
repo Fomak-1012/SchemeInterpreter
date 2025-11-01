@@ -761,10 +761,21 @@ Value Apply::eval(Assoc &e) {
 Value Define::eval(Assoc &env) {
     //TODO: To complete the define logic
     //std::cerr << "调用一次：" << __func__ << std::endl;
-
-    Value val=e->eval(env); 
+    Lambda* lambda_expr=dynamic_cast<Lambda*>(e.get());
+    if(lambda_expr){
+        Value plh=ProcedureV(lambda_expr->x,lambda_expr->e,env);
+        env=extend(var,plh,env);
+        Procedure* pro=dynamic_cast<Procedure*>(plh.get());
+        if(pro)
+            pro->env=extend(var,plh,pro->env);
+        return VoidV();
+    }
+    else{
+        Value val=e->eval(env); 
     env=extend(var,val,env);
     return VoidV();
+    }
+    
 }
 
 Value Let::eval(Assoc &env) {
