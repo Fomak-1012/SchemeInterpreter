@@ -281,7 +281,7 @@ Value PlusVar::evalRator(const std::vector<Value> &args) { // + with multiple ar
     //TODO: To complete the addition logic
     //std::cerr << "调用一次：" << __func__ << std::endl;
 
-    if(args.empty())throw(RuntimeError("Undefined option"));
+    if(args.empty())return IntegerV(0);
     Value tmp=args[0];
     for(int i=1;i<args.size();i++)
         tmp=Plus(nullptr,nullptr).evalRator(tmp,args[i]);
@@ -294,6 +294,10 @@ Value MinusVar::evalRator(const std::vector<Value> &args) { // - with multiple a
 
     if(args.empty())throw(RuntimeError("Undefined option"));
     Value tmp=args[0];
+    if(args.size()==1){
+        Value zero=IntegerV(0);
+        return Minus(nullptr,nullptr).evalRator(zero,args[0]);
+    }
     for(int i=1;i<args.size();i++)
         tmp=Minus(nullptr,nullptr).evalRator(tmp,args[i]);
     return tmp;
@@ -303,7 +307,7 @@ Value MultVar::evalRator(const std::vector<Value> &args) { // * with multiple ar
     //TODO: To complete the multiplication logic
     //std::cerr << "调用一次：" << __func__ << std::endl;
 
-    if(args.empty())throw(RuntimeError("Undefined option"));
+    if(args.empty())return IntegerV(1);
     Value tmp=args[0];
     for(int i=1;i<args.size();i++)
         tmp=Mult(nullptr,nullptr).evalRator(tmp,args[i]);
@@ -315,6 +319,10 @@ Value DivVar::evalRator(const std::vector<Value> &args) { // / with multiple arg
     //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if(args.empty())throw(RuntimeError("Undefined option"));
+    if(args.size()==1){
+        Value one=IntegerV(1);
+        return Div(nullptr,nullptr).evalRator(one,args[0]);
+    }
     Value tmp=args[0];
     for(int i=1;i<args.size();i++)
         tmp=Div(nullptr,nullptr).evalRator(tmp,args[i]);
