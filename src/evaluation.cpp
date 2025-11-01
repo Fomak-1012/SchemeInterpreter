@@ -678,6 +678,7 @@ Value Quote::eval(Assoc& e) {
 
 Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     //TODO: To complete the and logic
+    if(rands.empty())return BooleanV(true);
     for(auto &it:rands){
         Value val=it->eval(e);
         if(val->v_type==V_BOOL&&!dynamic_cast<Boolean*>(val.get())->b)
@@ -688,6 +689,7 @@ Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
 
 Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
     //TODO: To complete the or logic
+    if(rands.empty())return BooleanV(false);
     for(auto &it:rands){
         Value val=it->eval(e);
         if(val->v_type==V_BOOL&&dynamic_cast<Boolean*>(val.get())->b)
