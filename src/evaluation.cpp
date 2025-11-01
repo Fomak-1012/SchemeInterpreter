@@ -732,23 +732,27 @@ Value Lambda::eval(Assoc &env) {
 }
 
 Value Apply::eval(Assoc &e) {
-    //std::cerr << "调用一次：" << __func__ << std::endl;
-    Value proval=rator->eval(e);
-    if (proval->v_type != V_PROC) {throw RuntimeError("Attempt to apply a non-procedure");}
+    Value proval = rator->eval(e);
+    if (proval->v_type != V_PROC) {
+        throw RuntimeError("Attempt to apply a non-procedure");
+    }
 
-    //TODO: TO COMPLETE THE CLOSURE LOGIC
     Procedure* clos_ptr = dynamic_cast<Procedure*>(proval.get());
     
-    //TODO: TO COMPLETE THE ARGUMENT PARSER LOGIC
     std::vector<Value> args;
-    for(auto it:rand)args.push_back(it->eval(e));
-    if (args.size() != clos_ptr->parameters.size()) 
-        throw RuntimeError("Wrong number of arguments");
+    for(auto it : rand) {
+        args.push_back(it->eval(e));
+    }
     
-    //TODO: TO COMPLETE THE PARAMETERS' ENVIRONMENT LOGIC
+    if (args.size() != clos_ptr->parameters.size()) {
+        throw RuntimeError("Wrong number of arguments");
+    }
+    
+    // 使用闭包保存的环境，确保参数名遮蔽外层同名变量
     Assoc param_env = clos_ptr->env;
-    for(int i=0;i<args.size();i++)
-        param_env=extend(clos_ptr->parameters[i],args[i],param_env);
+    for(int i = 0; i < args.size(); i++) {
+        param_env = extend(clos_ptr->parameters[i], args[i], param_env);
+    }
 
     return clos_ptr->e->eval(param_env);
 }
