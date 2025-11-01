@@ -448,16 +448,16 @@ Value LessEq::evalRator(const Value &rand1, const Value &rand2) { // <=
 
 Value Equal::evalRator(const Value &rand1, const Value &rand2) { // =
     //TODO: To complete the equal logic
-    if (rand1->v_type == V_STRING && rand2->v_type == V_STRING) {
-        String *s1 = dynamic_cast<String*>(rand1.get());
-        String *s2 = dynamic_cast<String*>(rand2.get());
-        return BooleanV(s1->s == s2->s);
-    }
-    if (rand1->v_type == V_SYM && rand2->v_type == V_SYM) {
-        Symbol *s1 = dynamic_cast<Symbol*>(rand1.get());
-        Symbol *s2 = dynamic_cast<Symbol*>(rand2.get());
-        return BooleanV(s1->s == s2->s);
-    }
+    // if (rand1->v_type == V_STRING && rand2->v_type == V_STRING) {
+    //     String *s1 = dynamic_cast<String*>(rand1.get());
+    //     String *s2 = dynamic_cast<String*>(rand2.get());
+    //     return BooleanV(s1->s == s2->s);
+    // }
+    // if (rand1->v_type == V_SYM && rand2->v_type == V_SYM) {
+    //     Symbol *s1 = dynamic_cast<Symbol*>(rand1.get());
+    //     Symbol *s2 = dynamic_cast<Symbol*>(rand2.get());
+    //     return BooleanV(s1->s == s2->s);
+    // }
     int result=mycompareNumericValues(rand1,rand2);
     if(result==0)return BooleanV(true);
     if(result==1||result==-1) return BooleanV(false);
@@ -648,39 +648,33 @@ Value Begin::eval(Assoc &e) {
 }
 
 Value conv(const Syntax& s){
-    if(auto num=dynamic_cast<Number*>(s.get())){
+    if (auto num = dynamic_cast<Number*>(s.get())) {
         return IntegerV(num->n);
-    }
-    else if(auto rat=dynamic_cast<RationalSyntax*>(s.get())){
-        return RationalV(rat->numerator,rat->denominator);
-    }
-    else if(auto str=dynamic_cast<StringSyntax*>(s.get())){
+    } else if (auto rat = dynamic_cast<RationalSyntax*>(s.get())) {
+        return RationalV(rat->numerator, rat->denominator);
+    } else if (auto str = dynamic_cast<StringSyntax*>(s.get())) {
         return StringV(str->s);
-    }
-    else if(auto sym=dynamic_cast<SymbolSyntax*>(s.get())){
+    } else if (auto sym = dynamic_cast<SymbolSyntax*>(s.get())) {
         return SymbolV(sym->s);
-    }
-    else if(dynamic_cast<TrueSyntax*>(s.get())){
+    } else if (dynamic_cast<TrueSyntax*>(s.get())) {
         return BooleanV(true);
-    }
-    else if(dynamic_cast<FalseSyntax*>(s.get())){
+    } else if (dynamic_cast<FalseSyntax*>(s.get())) {
         return BooleanV(false);
-    }
-    else if(auto lis=dynamic_cast<List*>(s.get())){
-        if(lis->stxs.empty())return NullV();
-        Value car=conv(lis->stxs[0]);
-        Value cdr=NullV();
-        if(lis->stxs.size()>1){
-            List* res=new List();
-            for(int i=1;i<lis->stxs.size();i++){
-                res->stxs.push_back(lis->stxs[i]);
-            }
-            cdr=conv(Syntax(res));
+    } else if (auto lis = dynamic_cast<List*>(s.get())) {
+        if (lis->stxs.empty()) return NullV();
+        Value head = conv(lis->stxs[0]);
+        Value tail = NullV();
+        if (lis->stxs.size() > 1) {
+            std::vector<Syntax> rest(lis->stxs.begin() + 1, lis->stxs.end());
+            List *rest_list = new List();
+            rest_list->stxs = rest;
+            tail = conv(Syntax(rest_list));
         }
-        return PairV(car,cdr);
+        return PairV(head, tail);
     }
-    throw RuntimeError("Wrong quote");
+    throw RuntimeError("Invalid quoted syntax");
 }
+
 Value Quote::eval(Assoc& e) {
     //TODO: To complete the quote logic
     return conv(s);
@@ -712,19 +706,19 @@ Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
     return last;
 }
 
-Value Not::evalRator(const Value &rand) { // not
-    //TODO: To complete the not logic
-    if(rand->v_type==V_BOOL)
-        return BooleanV(!dynamic_cast<Boolean*>(rand.get())->b);
-    return BooleanV(false);//不是#f的值都是#t
+Value If::eval(Assoc &e) {
+    Value cond_val = cond->eval(e);
+    bool cond_true = !(cond_val->v_type == V_BOOL && !dynamic_cast<Boolean*>(cond_val.get())->b);
+    if (cond_true)
+        return conseq->eval(e);
+    else
+        return alter->eval(e);
 }
 
-Value If::eval(Assoc &e) {
-    //TODO: To complete the if logic
-    Value condi=cond->eval(e);
-    bool flag= condi->v_type==V_BOOL?dynamic_cast<Boolean*>(condi.get())->b:true;
-    if(flag)return conseq->eval(e);
-    else return alter->eval(e);
+Value Not::evalRator(const Value &rand) {
+    if (rand->v_type == V_BOOL)
+        return BooleanV(!dynamic_cast<Boolean*>(rand.get())->b);
+    return BooleanV(false);  
 }
 
 Value Cond::eval(Assoc &env) {
@@ -785,20 +779,19 @@ Value Apply::eval(Assoc &e) {
 Value Define::eval(Assoc &env) {
     //TODO: To complete the define logic
     //std::cerr << "调用一次：" << __func__ << std::endl;
-    Lambda* lambda_expr=dynamic_cast<Lambda*>(e.get());
-    if(lambda_expr){
-        Value plh=ProcedureV(lambda_expr->x,lambda_expr->e,env);
-        env=extend(var,plh,env);
-        Procedure* pro=dynamic_cast<Procedure*>(plh.get());
-        if(pro)
-            pro->env=extend(var,plh,pro->env);
-        return VoidV();
+    Lambda *lambda_expr = dynamic_cast<Lambda*>(e.get());
+    Value val=NullV();
+    if (lambda_expr) {
+        val = ProcedureV(lambda_expr->x, lambda_expr->e, env);
+        // 把函数自己绑定进自身环境实现递归
+        val->v_type = V_PROC;
+        Procedure *proc = dynamic_cast<Procedure*>(val.get());
+        proc->env = extend(var, val, proc->env);
+    } else {
+        val = e->eval(env);
     }
-    else{
-        Value val=e->eval(env); 
-    env=extend(var,val,env);
+    env = extend(var, val, env);
     return VoidV();
-    }
     
 }
 

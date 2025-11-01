@@ -83,7 +83,7 @@ Expr List::parse(Assoc &env) {
                 args.push_back(stxs[i]->parse(env));
             return Expr(new Apply(rator,args));
         }
-        else if (primitives.count(op) != 0) {
+        if (primitives.count(op) != 0) {
             vector<Expr> parameters;
             for(int i=1;i<stxs.size();i++)
                 parameters.push_back(stxs[i]->parse(env));
@@ -271,7 +271,7 @@ Expr List::parse(Assoc &env) {
             } 
         }
         //预留关键字这一块
-        else if (reserved_words.count(op) != 0) {
+        if (reserved_words.count(op) != 0) {
             switch (reserved_words[op]) {
                 //TODO: TO COMPLETE THE reserve_words PARSER LOGIC
                 case E_IF:{
@@ -341,8 +341,21 @@ Expr List::parse(Assoc &env) {
                     return Expr(new Quote(stxs[1]));
                 }
                 case E_DEFINE:{
-                    SymbolSyntax *name=dynamic_cast<SymbolSyntax*>(stxs[1].get());
-                    return Expr(new Define(name->s,stxs[2]->parse(env)));
+                    if (auto name = dynamic_cast<SymbolSyntax*>(stxs[1].get())) {
+                        return Expr(new Define(name->s, stxs[2]->parse(env)));
+                    } else if (auto fnlist = dynamic_cast<List*>(stxs[1].get())) {
+                        SymbolSyntax *fname = dynamic_cast<SymbolSyntax*>(fnlist->stxs[0].get());
+                        vector<string> params;
+                        for (size_t i = 1; i < fnlist->stxs.size(); ++i) {
+                            SymbolSyntax *sym = dynamic_cast<SymbolSyntax*>(fnlist->stxs[i].get());
+                            params.push_back(sym->s);
+                        }
+                        Expr body = stxs[2]->parse(env);
+                        Expr lambda = Expr(new Lambda(params, body));
+                        return Expr(new Define(fname->s, lambda));
+                    } else {
+                        throw RuntimeError("Invalid define syntax");
+                    }
                 }
                 case E_BEGIN:{
                     vector<Expr> exprs;
