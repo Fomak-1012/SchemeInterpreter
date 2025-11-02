@@ -246,7 +246,9 @@ Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
         if (divisor == 0) {
             throw(RuntimeError("Division by zero"));
         }
-        return IntegerV(dividend / divisor);
+        if(dividend%divisor==0)
+            return IntegerV(dividend / divisor);
+            else return RationalV(dividend,divisor);
     }
      if((rand1->v_type==V_INT&&rand2->v_type==V_RATIONAL)||
     (rand2->v_type==V_INT&&rand1->v_type==V_RATIONAL)|| 
