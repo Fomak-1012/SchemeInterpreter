@@ -56,6 +56,25 @@ Expr FalseSyntax::parse(Assoc &env) {
     return Expr(new False());
 }
 
+Expr syntax_To_Expr(const Syntax &s,Assoc &env)
+{
+    if (auto num = dynamic_cast<Number*>(s.get())) {
+        return Expr(new Fixnum(num->n));
+    } else if (auto rat = dynamic_cast<RationalSyntax*>(s.get())) {
+        return Expr(new RationalNum(rat->numerator, rat->denominator));
+    } else if (auto str = dynamic_cast<StringSyntax*>(s.get())) {
+        return Expr(new StringExpr(str->s));
+    } else if (auto sym = dynamic_cast<SymbolSyntax*>(s.get())) {
+        return Expr(new Var(sym->s));
+    } else if (dynamic_cast<TrueSyntax*>(s.get())) {
+        return Expr(new True());
+    } else if (dynamic_cast<FalseSyntax*>(s.get())) {
+        return Expr(new False());
+    } else if (auto lis = dynamic_cast<List*>(s.get())) {
+        return lis->parse(env);
+    }
+    throw RuntimeError("Invalid quoted syntax");
+}
 Expr List::parse(Assoc &env) {
     if (stxs.empty()) {
         return Expr(new Quote(Syntax(new List())));
@@ -320,10 +339,14 @@ Expr List::parse(Assoc &env) {
                 }    
                 
                 case E_QUOTE:{
-                    if(stxs.size()!=2){
-                        throw RuntimeError("Wrong number of Quote");
+                    Value flag=find("quote",env);
+                    if(flag.get()!=nullptr){
+                        vector<Expr> args;
+                        for(int i=1;i<stxs.size();i++)args.push_back(syntax_To_Expr(stxs[i],env));
+                        return Expr(new Apply(new Var("quote"),args));
                     }
-                    return Expr(new Quote(stxs[1]));
+                    if(stxs.size()==2)return Expr(new Quote(stxs[1]));
+                    else throw RuntimeError("Wrong number of arguments for quote");
                 }
                 case E_DEFINE:{
                     if (auto name = dynamic_cast<SymbolSyntax*>(stxs[1].get())) {
@@ -467,16 +490,14 @@ Expr List::parse(Assoc &env) {
                     throw RuntimeError("Unknown reserved word: " + op);
             }
         }
-
+  
         //default: use Apply to be an expression
         //TODO: TO COMPLETE THE PARSER LOGIC
-        else{
-            Expr rator=stxs[0]->parse(env);
-            vector<Expr>args;
-            for(int i=1;i<stxs.size();i++)
-                args.push_back(stxs[i]->parse(env));
-            return Expr(new Apply(rator,args));
-        }
+        Expr rator=stxs[0]->parse(env);
+        vector<Expr>args;
+        for(int i=1;i<stxs.size();i++)
+            args.push_back(stxs[i]->parse(env));
+        return Expr(new Apply(rator,args));
         
     }
 }
