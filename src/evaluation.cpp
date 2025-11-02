@@ -545,6 +545,7 @@ Value IsList::evalRator(const Value &rand) { // list?
         tmp=dynamic_cast<Pair*>(tmp.get())->cdr;
     }
     return BooleanV(tmp->v_type==V_NULL);
+    //要么访问到空表，要么访问一列列pair后访问到空表
 }
 
 Value Car::evalRator(const Value &rand) { // car
@@ -565,7 +566,7 @@ Value Cdr::evalRator(const Value &rand) { // cdr
 
 Value SetCar::evalRator(const Value &rand1, const Value &rand2) { // set-car!
     //TODO: To complete the set-car! logic
-    if(rand1->v_type!=V_PAIR)throw(RuntimeError("not pair"));
+    if(rand1->v_type!=V_PAIR)throw(RuntimeError("Wrong typename"));
     Pair *p=dynamic_cast<Pair*>(rand1.get());
     p->car=rand2;
     return VoidV();
@@ -573,7 +574,7 @@ Value SetCar::evalRator(const Value &rand1, const Value &rand2) { // set-car!
 
 Value SetCdr::evalRator(const Value &rand1, const Value &rand2) { // set-cdr!
    //TODO: To complete the set-cdr! logic
-   if(rand1->v_type!=V_PAIR)throw(RuntimeError("not pair"));
+   if(rand1->v_type!=V_PAIR)throw(RuntimeError("Wrong typename"));
     Pair *p=dynamic_cast<Pair*>(rand1.get());
     p->cdr=rand2;
     return VoidV();
@@ -705,6 +706,7 @@ Value Not::evalRator(const Value &rand) {
     if (rand->v_type == V_BOOL)
         return BooleanV(!dynamic_cast<Boolean*>(rand.get())->b);
     return BooleanV(false);  
+    //非#f均为真
 }
 
 Value Cond::eval(Assoc &env) {
@@ -747,7 +749,10 @@ Value Apply::eval(Assoc &env) {
     for(auto &arg_expr : rand) {
         arg_vals.push_back(arg_expr->eval(env));
     }
-    
+    if (auto varNode = dynamic_cast<Variadic*>(proc->e.get())) {
+        //TODO
+        return varNode->evalRator(arg_vals);
+    }
     if (arg_vals.size() != proc->parameters.size()) {
         throw RuntimeError("Wrong number of arguments");
     }
