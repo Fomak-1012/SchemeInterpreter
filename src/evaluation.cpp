@@ -93,6 +93,21 @@ Value Var::eval(Assoc &e) { // evaluation of variable
                     {E_MODULO,   {new Modulo(new Var("parm1"), new Var("parm2")), {"parm1","parm2"}}},
                     {E_EXPT,     {new Expt(new Var("parm1"), new Var("parm2")), {"parm1","parm2"}}},
                     {E_EQQ,      {new EqualVar({}), {}}},
+                    {E_EQ,       {new EqualVar({}), {}}},
+                    {E_LT,       {new LessVar({}), {}}},
+                    {E_LE,       {new LessEqVar({}), {}}},
+                    {E_GE,       {new GreaterEqVar({}), {}}},
+                    {E_GT,       {new GreaterVar({}), {}}},
+                    {E_CONS,     {new Cons(new Var("parm1"), new Var("parm2")), {"parm1","parm2"}}},
+                    {E_CAR,      {new Car(new Var("parm")), {"parm"}}},
+                    {E_CDR,      {new Cdr(new Var("parm")), {"parm"}}},
+                    {E_NOT,      {new Not(new Var("parm")), {"parm"}}},
+                    {E_LIST,     {new ListFunc({}), {}}},
+                    {E_LISTQ,    {new IsList(new Var("parm")), {"parm"}}},
+                    {E_SETCAR,   {new SetCar(new Var("parm1"), new Var("parm2")), {"parm1","parm2"}}},
+                    {E_SETCDR,   {new SetCdr(new Var("parm1"), new Var("parm2")), {"parm1","parm2"}}},
+                    {E_AND,      {new AndVar({}), {}}},
+                    {E_OR,       {new OrVar({}), {}}}
             };
 
             auto it = primitive_map.find(primitives[x]);
@@ -400,84 +415,63 @@ int compareNumericValues(const Value &v1, const Value &v2) {
     throw RuntimeError("Wrong typename in numeric comparison");
 }
 
-int mycompareNumericValues(const Value &v1, const Value &v2) {
-    if (v1->v_type == V_INT && v2->v_type == V_INT) {
-        int n1 = dynamic_cast<Integer*>(v1.get())->n;
-        int n2 = dynamic_cast<Integer*>(v2.get())->n;
-        return (n1 < n2) ? -1 : (n1 > n2) ? 1 : 0;
-    }
-    else if (v1->v_type == V_RATIONAL && v2->v_type == V_INT) {
-        Rational* r1 = dynamic_cast<Rational*>(v1.get());
-        int n2 = dynamic_cast<Integer*>(v2.get())->n;
-        int left = r1->numerator;
-        int right = n2 * r1->denominator;
-        return (left < right) ? -1 : (left > right) ? 1 : 0;
-    }
-    else if (v1->v_type == V_INT && v2->v_type == V_RATIONAL) {
-        int n1 = dynamic_cast<Integer*>(v1.get())->n;
-        Rational* r2 = dynamic_cast<Rational*>(v2.get());
-        int left = n1 * r2->denominator;
-        int right = r2->numerator;
-        return (left < right) ? -1 : (left > right) ? 1 : 0;
-    }
-    else if (v1->v_type == V_RATIONAL && v2->v_type == V_RATIONAL) {
-        Rational* r1 = dynamic_cast<Rational*>(v1.get());
-        Rational* r2 = dynamic_cast<Rational*>(v2.get());
-        int left = r1->numerator * r2->denominator;
-        int right = r2->numerator * r1->denominator;
-        return (left < right) ? -1 : (left > right) ? 1 : 0;
-    }
-    return 2;
-    // throw RuntimeError("Wrong typename in numeric comparison");
-}
 Value Less::evalRator(const Value &rand1, const Value &rand2) { // <
     //TODO: To complete the less logic
-    int result=compareNumericValues(rand1,rand2);
-    if(result==-1)return BooleanV(true);
-    if(result==0||result==1) return BooleanV(false);
-    throw(RuntimeError("Wrong typename"));
+    if((rand1->v_type==V_INT||rand1->v_type==V_RATIONAL)&&(rand2->v_type==V_INT||rand2->v_type==V_RATIONAL)){
+        int up1=rand1->v_type==V_INT?dynamic_cast<Integer*>(rand1.get())->n:dynamic_cast<Rational*>(rand1.get())->numerator;
+        int down1=rand1->v_type==V_INT?1:dynamic_cast<Rational*>(rand1.get())->denominator;
+        int up2=rand2->v_type==V_INT?dynamic_cast<Integer*>(rand2.get())->n:dynamic_cast<Rational*>(rand2.get())->numerator;
+        int down2=rand2->v_type==V_INT?1:dynamic_cast<Rational*>(rand2.get())->denominator;
+        return BooleanV(up1*down2<up2*down1);
+    }
+    throw RuntimeError("Wrong typename");
 }
 
 Value LessEq::evalRator(const Value &rand1, const Value &rand2) { // <=
     //TODO: To complete the lesseq logic
-    int result=compareNumericValues(rand1,rand2);
-    if(result==-1||result==0)return BooleanV(true);
-    if(result==1) return BooleanV(false);
-    throw(RuntimeError("Wrong typename"));
+    if((rand1->v_type==V_INT||rand1->v_type==V_RATIONAL)&&(rand2->v_type==V_INT||rand2->v_type==V_RATIONAL)){
+        int up1=rand1->v_type==V_INT?dynamic_cast<Integer*>(rand1.get())->n:dynamic_cast<Rational*>(rand1.get())->numerator;
+        int down1=rand1->v_type==V_INT?1:dynamic_cast<Rational*>(rand1.get())->denominator;
+        int up2=rand2->v_type==V_INT?dynamic_cast<Integer*>(rand2.get())->n:dynamic_cast<Rational*>(rand2.get())->numerator;
+        int down2=rand2->v_type==V_INT?1:dynamic_cast<Rational*>(rand2.get())->denominator;
+        return BooleanV(up1*down2<=up2*down1);
+    }
+    throw RuntimeError("Wrong typename");
 }
 
 Value Equal::evalRator(const Value &rand1, const Value &rand2) { // =
-    //TODO: To complete the equal logic
-    // if (rand1->v_type == V_STRING && rand2->v_type == V_STRING) {
-    //     String *s1 = dynamic_cast<String*>(rand1.get());
-    //     String *s2 = dynamic_cast<String*>(rand2.get());
-    //     return BooleanV(s1->s == s2->s);
-    // }
-    // if (rand1->v_type == V_SYM && rand2->v_type == V_SYM) {
-    //     Symbol *s1 = dynamic_cast<Symbol*>(rand1.get());
-    //     Symbol *s2 = dynamic_cast<Symbol*>(rand2.get());
-    //     return BooleanV(s1->s == s2->s);
-    // }
-    int result=compareNumericValues(rand1,rand2);
-    if(result==0)return BooleanV(true);
-    if(result==1||result==-1) return BooleanV(false);
-    throw(RuntimeError("Wrong typename"));
+    if((rand1->v_type==V_INT||rand1->v_type==V_RATIONAL)&&(rand2->v_type==V_INT||rand2->v_type==V_RATIONAL)){
+        int up1=rand1->v_type==V_INT?dynamic_cast<Integer*>(rand1.get())->n:dynamic_cast<Rational*>(rand1.get())->numerator;
+        int down1=rand1->v_type==V_INT?1:dynamic_cast<Rational*>(rand1.get())->denominator;
+        int up2=rand2->v_type==V_INT?dynamic_cast<Integer*>(rand2.get())->n:dynamic_cast<Rational*>(rand2.get())->numerator;
+        int down2=rand2->v_type==V_INT?1:dynamic_cast<Rational*>(rand2.get())->denominator;
+        return BooleanV(up1*down2==up2*down1);
+    }
+    throw RuntimeError("Wrong typename");
 }
 
 Value GreaterEq::evalRator(const Value &rand1, const Value &rand2) { // >=
     //TODO: To complete the greatereq logic
-    int result=compareNumericValues(rand1,rand2);
-    if(result==0||result==1)return BooleanV(true);
-    if(result==-1) return BooleanV(false);
-    throw(RuntimeError("Wrong typename"));
+    if((rand1->v_type==V_INT||rand1->v_type==V_RATIONAL)&&(rand2->v_type==V_INT||rand2->v_type==V_RATIONAL)){
+        int up1=rand1->v_type==V_INT?dynamic_cast<Integer*>(rand1.get())->n:dynamic_cast<Rational*>(rand1.get())->numerator;
+        int down1=rand1->v_type==V_INT?1:dynamic_cast<Rational*>(rand1.get())->denominator;
+        int up2=rand2->v_type==V_INT?dynamic_cast<Integer*>(rand2.get())->n:dynamic_cast<Rational*>(rand2.get())->numerator;
+        int down2=rand2->v_type==V_INT?1:dynamic_cast<Rational*>(rand2.get())->denominator;
+        return BooleanV(up1*down2>=up2*down1);
+    }
+    throw RuntimeError("Wrong typename");
 }
 
 Value Greater::evalRator(const Value &rand1, const Value &rand2) { // >
     //TODO: To complete the greater logic
-    int result=compareNumericValues(rand1,rand2);
-    if(result==1)return BooleanV(true);
-    if(result==0||result==-1) return BooleanV(false);
-    throw(RuntimeError("Wrong typename"));
+    if((rand1->v_type==V_INT||rand1->v_type==V_RATIONAL)&&(rand2->v_type==V_INT||rand2->v_type==V_RATIONAL)){
+        int up1=rand1->v_type==V_INT?dynamic_cast<Integer*>(rand1.get())->n:dynamic_cast<Rational*>(rand1.get())->numerator;
+        int down1=rand1->v_type==V_INT?1:dynamic_cast<Rational*>(rand1.get())->denominator;
+        int up2=rand2->v_type==V_INT?dynamic_cast<Integer*>(rand2.get())->n:dynamic_cast<Rational*>(rand2.get())->numerator;
+        int down2=rand2->v_type==V_INT?1:dynamic_cast<Rational*>(rand2.get())->denominator;
+        return BooleanV(up1*down2>up2*down1);
+    }
+    throw RuntimeError("Wrong typename");
 }
 
 Value LessVar::evalRator(const std::vector<Value> &args) { // < with multiple args
@@ -532,7 +526,6 @@ Value GreaterVar::evalRator(const std::vector<Value> &args) { // > with multiple
 
 Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
     //TODO: To complete the cons logic
-    // std::cerr<<"成功调用Cons"<<std::endl;
     return PairV(rand1,rand2);
 }
 
@@ -541,10 +534,7 @@ Value ListFunc::evalRator(const std::vector<Value> &args) { // list function
     Value list=NullV();
     for(int i=args.size()-1;i>=0;i--){
         list=PairV(args[i],list);
-    }
-    // for(auto &it:args){
-    //     list=PairV(it,list);
-    // }
+    }//表要顺序访问，所以要逆序建表
     return list;
 }
 
