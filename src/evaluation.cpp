@@ -63,6 +63,12 @@ Value Variadic::eval(Assoc &e) { // evaluation of multi-operator primitive
     return evalRator(vals);
 }
 
+// 工厂函数模板，用于创建 Expr 对象
+template<typename T, typename... Args>
+Expr make_Expr(Args&&... args) {
+    return Expr(new T(std::forward<Args>(args)...));
+}
+
 Value Var::eval(Assoc &e) { // evaluation of variable
     // TODO: TO identify the invalid variable
     // We request all valid variable just need to be a symbol,you should promise:
@@ -300,10 +306,12 @@ Value PlusVar::evalRator(const std::vector<Value> &args) { // + with multiple ar
 
     if(args.empty())return IntegerV(0);
     Value tmp=args[0];
+    Value zero=IntegerV(0);
     for(int i=1;i<args.size();i++)
         tmp=Plus(nullptr,nullptr).evalRator(tmp,args[i]);
     return tmp;
 }
+
 
 Value MinusVar::evalRator(const std::vector<Value> &args) { // - with multiple args
     //TODO: To complete the substraction logic
@@ -697,12 +705,12 @@ Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
 }
 
 Value If::eval(Assoc &e) {
-    Value cond_val = cond->eval(e);
-    bool cond_true = !(cond_val->v_type == V_BOOL && !dynamic_cast<Boolean*>(cond_val.get())->b);
-    if (cond_true)
-        return conseq->eval(e);
-    else
-        return alter->eval(e);
+    // Value cond_val = cond->eval(e);
+    // bool cond_true = !(cond_val->v_type == V_BOOL && !dynamic_cast<Boolean*>(cond_val.get())->b);
+    // if (cond_true)
+    //     return conseq->eval(e);
+    // else
+    //     return alter->eval(e);
 }
 
 Value Not::evalRator(const Value &rand) {
