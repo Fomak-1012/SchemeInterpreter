@@ -280,6 +280,7 @@ Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
         }
         int ups=up1*down2;
         int downs=up2*down1;
+        if (downs==0)throw RuntimeError("Division by zero");
         if(ups%downs==0)return IntegerV(ups/downs);
         else return RationalV(ups,downs);
     }
