@@ -196,18 +196,37 @@ Expr List::parse(Assoc &env) {
                 if(parameters.size()!=1)
                     throw RuntimeError("Wrong number of not");
                 return Expr(new Not(parameters[0]));
-            } else if (op_type == E_CONS){
-                if(parameters.size()!=2)
-                    throw RuntimeError("Wrong grammar of cons");
-                return Expr(new Cons(parameters[0],parameters[1]));
-            } else if (op_type == E_CAR){
-                if(parameters.size()!=1)
-                    throw RuntimeError("Wrong number of car");
-                return Expr(new Car(parameters[0]));
-            } else if (op_type == E_CDR){
-                if(parameters.size()!=1)
-                    throw RuntimeError("Wrong number of cdr");
-                return Expr(new Cdr(parameters[0]));
+            // } else if (op_type == E_CONS){
+            //     if(parameters.size()!=2)
+            //         throw RuntimeError("Wrong grammar of cons");
+            //     return Expr(new Cons(parameters[0],parameters[1]));
+            // } else if (op_type == E_CAR){
+            //     if(parameters.size()!=1)
+            //         throw RuntimeError("Wrong number of car");
+            //     return Expr(new Car(parameters[0]));
+            // } else if (op_type == E_CDR){
+            //     if(parameters.size()!=1)
+            //         throw RuntimeError("Wrong number of cdr");
+            //     return Expr(new Cdr(parameters[0]));
+            }else if (op_type == E_CAR) {
+                if (parameters.size() == 1) {
+                    return Expr(new Car(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for car");
+                }
+            } else if (op_type == E_CDR) {
+                if (parameters.size() == 1) {
+                    return Expr(new Cdr(parameters[0]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for cdr");
+                }
+            } else if (op_type == E_CONS) {
+                if (parameters.size() == 2) {
+                    return Expr(new Cons(parameters[0], parameters[1]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for cons");
+                }
+        
             } else if (op_type == E_SETCAR) {
                 if (parameters.size() != 2) {
                     throw RuntimeError("Wrong number of set-car!");

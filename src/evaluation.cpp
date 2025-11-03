@@ -536,6 +536,11 @@ Value GreaterVar::evalRator(const std::vector<Value> &args) { // > with multiple
     return BooleanV(true);
 }
 
+// Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
+//     //TODO: To complete the cons logic
+//     return PairV(rand1,rand2);
+// }
+
 Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
     //TODO: To complete the cons logic
     return PairV(rand1,rand2);
@@ -560,20 +565,32 @@ Value IsList::evalRator(const Value &rand) { // list?
     //要么访问到空表，要么访问一列列pair后访问到空表
 }
 
+// Value Car::evalRator(const Value &rand) { // car
+//     //TODO: To complete the car logic
+//     if(rand->v_type==V_PAIR){
+//         return dynamic_cast<Pair*>(rand.get())->car;
+//     }
+//     throw(RuntimeError("Wrong typename"));
+// }
+
+// Value Cdr::evalRator(const Value &rand) { // cdr
+//     //TODO: To complete the cdr logic                                                 
+//     if(rand->v_type==V_PAIR){
+//         return dynamic_cast<Pair*>(rand.get())->cdr;
+//     }
+//     throw(RuntimeError("Wrong typename"));
+// }
+
 Value Car::evalRator(const Value &rand) { // car
     //TODO: To complete the car logic
-    if(rand->v_type==V_PAIR){
-        return dynamic_cast<Pair*>(rand.get())->car;
-    }
-    throw(RuntimeError("Wrong typename"));
+    if(rand->v_type == V_PAIR) return dynamic_cast<Pair*>(rand.get())->car;
+    throw(RuntimeError("Wrong typename in Car"));
 }
 
 Value Cdr::evalRator(const Value &rand) { // cdr
     //TODO: To complete the cdr logic
-    if(rand->v_type==V_PAIR){
-        return dynamic_cast<Pair*>(rand.get())->cdr;
-    }
-    throw(RuntimeError("Wrong typename"));
+    if(rand->v_type == V_PAIR) return dynamic_cast<Pair*>(rand.get())->cdr;//it can print the whole cdr parts until the last element
+    throw(RuntimeError("Wrong typename in Cdr"));
 }
 
 Value SetCar::evalRator(const Value &rand1, const Value &rand2) { // set-car!
