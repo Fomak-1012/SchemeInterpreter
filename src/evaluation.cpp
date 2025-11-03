@@ -667,14 +667,7 @@ Value Begin::eval(Assoc &e) {
     return res;
 }
 
-Value conv(const Syntax&);
-
-Value buildList(const std::vector<Syntax>& stxs, int index = 0) {
-    if (index >= stxs.size()) return NullV();
-    return PairV(conv(stxs[index]), buildList(stxs, index + 1));
-}
-
-Value conv(const Syntax& s) {
+Value conv(const Syntax &s) {
     if (auto num = dynamic_cast<Number*>(s.get())) {
         return IntegerV(num->n);
     } else if (auto rat = dynamic_cast<RationalSyntax*>(s.get())) {
@@ -687,10 +680,50 @@ Value conv(const Syntax& s) {
         return BooleanV(true);
     } else if (dynamic_cast<FalseSyntax*>(s.get())) {
         return BooleanV(false);
-    } else if (auto lis = dynamic_cast<List*>(s.get())) {
-        return buildList(lis->stxs);
     }
-    throw RuntimeError("Unsupported syntax type in quote");
+    // 处理列表类型
+    else if (auto list_syn = dynamic_cast<List*>(s.get())) {
+        const auto& stxs = list_syn->stxs;
+        if (stxs.empty()) return NullV(); // 空列表
+        int dot_pos = -1;// 查找点符号的位置
+        for (int i = 0; i < stxs.size(); ++i) {
+            if (auto sym = dynamic_cast<SymbolSyntax*>(stxs[i].get())) {
+                if (sym->s == ".") 
+                    dot_pos = i;
+            }
+        }
+        // 不正规链表(a b . c)
+        if (dot_pos != -1) {
+            // 构建car部分 (a b) - 必须是正规列表
+            Value car_list = NullV();
+            for (int i = dot_pos - 1; i >= 0; --i) {
+                car_list = PairV(conv(stxs[i]), car_list);
+            }
+            // 构建cdr部分 c
+            Value cdr = conv(stxs[dot_pos + 1]);
+            // 将car部分的最后一个cdr设置为cdr
+            if (car_list->v_type == V_NULL) {
+                return cdr;
+            } else {
+                Value current = car_list;
+                while (true) {
+                    Pair* pair = dynamic_cast<Pair*>(current.get());
+                    if (pair->cdr->v_type == V_NULL) {
+                        pair->cdr = cdr;
+                        break;
+                    }
+                    current = pair->cdr;
+                }
+                return car_list;
+            }
+        }
+        Value result = NullV();//正规的(a b c)
+        for (int i = stxs.size() - 1; i >= 0; --i) {
+            result = PairV(conv(stxs[i]), result);
+        }
+        return result;
+    }
+    throw RuntimeError("Invalid syntax type");
 }
 
 Value Quote::eval(Assoc& e) {
