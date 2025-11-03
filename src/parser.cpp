@@ -355,12 +355,6 @@ Expr List::parse(Assoc &env) {
                 }    
                 
                 case E_QUOTE:{
-                    Value flag=find("quote",env);
-                    if(flag.get()!=nullptr){
-                        vector<Expr> args;
-                        for(int i=1;i<stxs.size();i++)args.push_back(syntax_To_Expr(stxs[i],env));
-                        return Expr(new Apply(new Var("quote"),args));
-                    }
                     if(stxs.size()==2)return Expr(new Quote(stxs[1]));
                     else throw RuntimeError("Wrong number of arguments for quote");
                 }

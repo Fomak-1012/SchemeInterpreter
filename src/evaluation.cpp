@@ -649,6 +649,11 @@ Value Begin::eval(Assoc &e) {
     return res;
 }
 
+Value buildList(const std::vector<Syntax>& stxs, int index = 0) {
+    if (index >= stxs.size()) return NullV();
+    return PairV(conv(stxs[index]), buildList(stxs, index + 1));
+}
+
 Value conv(const Syntax& s) {
     if (auto num = dynamic_cast<Number*>(s.get())) {
         return IntegerV(num->n);
@@ -663,14 +668,9 @@ Value conv(const Syntax& s) {
     } else if (dynamic_cast<FalseSyntax*>(s.get())) {
         return BooleanV(false);
     } else if (auto lis = dynamic_cast<List*>(s.get())) {
-        if (lis->stxs.empty()) return NullV();
-        Value result = NullV();
-        for(int i = lis->stxs.size() - 1; i >= 0; i--) {
-            result = PairV(conv(lis->stxs[i]), result);
-        }
-        return result;
+        return buildList(lis->stxs);
     }
-    throw RuntimeError("Invalid quoted syntax");
+    throw RuntimeError("Unsupported syntax type in quote");
 }
 
 Value Quote::eval(Assoc& e) {
