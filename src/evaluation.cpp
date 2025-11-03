@@ -680,26 +680,33 @@ Value Quote::eval(Assoc& e) {
 
 Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     //TODO: To complete the and logic
-    if(rands.empty())return BooleanV(true);
-    Value last=BooleanV(true);
-    for(auto &it:rands){
-        Value val=it->eval(e);
-        if(val->v_type==V_BOOL&&!dynamic_cast<Boolean*>(val.get())->b)
-            return BooleanV(false);
-        last=val;
+    if(rands.empty())throw RuntimeError("Wrong number of and");
+    else {
+        Value last=BooleanV(true);
+        for(auto &it:rands){
+            Value val=it->eval(e);
+            if(val->v_type==V_BOOL&&!dynamic_cast<Boolean*>(val.get())->b)
+                return BooleanV(false);
+            last=val;
+        }
+        return last;
     }
-    return last;
+    
 }
 
 Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
     //TODO: To complete the or logic
-    if(rands.empty()) return BooleanV(false);
-    for(auto &it : rands) {
-        Value val=it->eval(e);
-        if(!(val->v_type==V_BOOL&&!dynamic_cast<Boolean*>(val.get())->b)) 
+    
+    if(rands.empty())throw RuntimeError("Wrong number of or");
+    else {
+        for(auto &it : rands) {
+            Value val=it->eval(e);
+            if(val->v_type==V_BOOL&&!dynamic_cast<Boolean*>(val.get())->b)continue;
             return val; 
     }
     return BooleanV(false);
+    }
+    
 }
 
 Value If::eval(Assoc &e) {
