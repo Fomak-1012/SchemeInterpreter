@@ -649,6 +649,8 @@ Value Begin::eval(Assoc &e) {
     return res;
 }
 
+Value conv(const Syntax&);
+
 Value buildList(const std::vector<Syntax>& stxs, int index = 0) {
     if (index >= stxs.size()) return NullV();
     return PairV(conv(stxs[index]), buildList(stxs, index + 1));
