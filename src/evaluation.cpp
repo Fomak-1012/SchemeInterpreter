@@ -680,7 +680,7 @@ Value Quote::eval(Assoc& e) {
 
 Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
     //TODO: To complete the and logic
-    if(rands.empty())return BooleanV(true);
+    if(rands.empty())return BooleanV(false);//注意，这里是错的，是为了测试我到底是哪里写挂了
     Value last=BooleanV(true);
     for(auto &it:rands){
         Value val=it->eval(e);
@@ -705,12 +705,12 @@ Value OrVar::eval(Assoc &e) { // or with short-circuit evaluation
 }
 
 Value If::eval(Assoc &e) {
-    // Value cond_val = cond->eval(e);
-    // bool cond_true = !(cond_val->v_type == V_BOOL && !dynamic_cast<Boolean*>(cond_val.get())->b);
-    // if (cond_true)
-    //     return conseq->eval(e);
-    // else
-    //     return alter->eval(e);
+    Value cond_val = cond->eval(e);
+    bool cond_true = !(cond_val->v_type == V_BOOL && !dynamic_cast<Boolean*>(cond_val.get())->b);
+    if (cond_true)
+        return conseq->eval(e);
+    else
+        return alter->eval(e);
 }
 
 Value Not::evalRator(const Value &rand) {
