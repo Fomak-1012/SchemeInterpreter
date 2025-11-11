@@ -145,7 +145,13 @@ Expr List::parse(Assoc &env) {
                     throw RuntimeError("Wrong number of arguments for modulo");
                 }
                 return Expr(new Modulo(parameters[0], parameters[1]));
-            } else if (op_type == E_LIST) {
+            } else if (op_type == E_EXPT) {
+                if (parameters.size() == 2) {
+                    return Expr(new Expt(parameters[0], parameters[1]));
+                } else {
+                    throw RuntimeError("Wrong number of arguments for expt");
+                }
+            }else if (op_type == E_LIST) {
                 return Expr(new ListFunc(parameters));
             } else if (op_type == E_LT) {
                 //TODO: TO COMPLETE THE LOGIC
