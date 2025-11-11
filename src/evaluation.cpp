@@ -63,11 +63,6 @@ Value Variadic::eval(Assoc &e) { // evaluation of multi-operator primitive
     return evalRator(vals);
 }
 
-// 工厂函数模板，用于创建 Expr 对象
-template<typename T, typename... Args>
-Expr make_Expr(Args&&... args) {
-    return Expr(new T(std::forward<Args>(args)...));
-}
 
 Value Var::eval(Assoc &e) { // evaluation of variable
     // TODO: TO identify the invalid variable
