@@ -464,6 +464,7 @@ Expr List::parse(Assoc &env) {
                     return Expr(new Begin(exprs));
                 }
                 case E_COND:{
+                if(stxs.size()<=1)throw RuntimeError("Invalid cond clause");
                 vector<vector<Expr>> clauses;
                 for(int i = 1; i < stxs.size(); i++) {
                     List *clause = dynamic_cast<List*>(stxs[i].get());

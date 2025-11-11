@@ -878,6 +878,8 @@ Value Letrec::eval(Assoc &env) {
 Value Set::eval(Assoc &env) {
     //TODO: To complete the set logic
     Value val=e->eval(env);
+    Value flag=find(var,env);
+    if(flag.get()==nullptr)throw(RuntimeError("Undefined variable : " + var));
     modify(var,val,env);
     return VoidV();
 }
