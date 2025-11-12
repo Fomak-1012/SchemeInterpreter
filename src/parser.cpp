@@ -383,80 +383,136 @@ Expr List::parse(Assoc &env) {
                     if(stxs.size()==2)return Expr(new Quote(stxs[1]));
                     else throw RuntimeError("Wrong number of arguments for quote");
                 }
-                // case E_DEFINE:{
-                //     if (auto name = dynamic_cast<SymbolSyntax*>(stxs[1].get())) {
-                //         return Expr(new Define(name->s, stxs[2]->parse(env)));
-                //     } else if (auto fnlist = dynamic_cast<List*>(stxs[1].get())) {
-                //         SymbolSyntax *fname = dynamic_cast<SymbolSyntax*>(fnlist->stxs[0].get());
-                //         vector<string> params;
-                //         for (size_t i = 1; i < fnlist->stxs.size(); ++i) {
-                //             SymbolSyntax *sym = dynamic_cast<SymbolSyntax*>(fnlist->stxs[i].get());
-                //             params.push_back(sym->s);
-                //         }
-                //         Expr body = stxs[2]->parse(env);
-                //         Expr lambda = Expr(new Lambda(params, body));
-                //         return Expr(new Define(fname->s, lambda));
-                //     } else {
-                //         throw RuntimeError("Invalid define syntax");
-                //     }
-                // }
-                case E_DEFINE:
-            {
-                Value match_value = find("define", env);
-                if(match_value.get() != nullptr)
-                {
-                    vector<Expr> args;
-                    for(size_t i = 1; i < stxs.size(); ++i) args.push_back(syntax_To_Expr(stxs[i], env));
-                    return Expr(new Apply(new Var("define"), args));
-                }
-                if(stxs.size() < 3) throw RuntimeError("Wrong number of arguments for define");
-                //check if it is the simple form of function(name)
-                if(auto lst = dynamic_cast<List*>(stxs[1].get()))
-                {
-                    if(!lst->stxs.empty())
-                    {
-                        if(SymbolSyntax* funcNameSym = dynamic_cast<SymbolSyntax*>(lst->stxs[0].get()))//get the name of the function
-                        {
-                            string funcName = funcNameSym->s;
-                            //if(primitives.count(funcName) || reserved_words.count(funcName)) throw RuntimeError("Define: cannot redefine primitive or reserved word");
-                            vector<string> parameters;
-                            for(size_t i=1; i<lst->stxs.size(); ++i)
-                            {
-                                SymbolSyntax* paramSym = dynamic_cast<SymbolSyntax*>(lst->stxs[i].get());
-                                if (paramSym != nullptr) parameters.push_back(paramSym->s);
-                                else throw RuntimeError("Invalid parameter in function definition");
-                            }
-                            vector<Expr> exps;
-                            for(size_t i=2; i<stxs.size(); ++i) exps.push_back(syntax_To_Expr(stxs[i],env));
-                            Expr body=exps[0];//size=1
-                            if(exps.size() > 1) body = Expr(new Begin(exps));
-                            
-                            Assoc func_env = env;//store all func_name in case it is defined afterward
-                            func_env = extend(funcName, VoidV(), func_env);  //including myself
-                            vector<Expr> new_exps;
-                            for(size_t i=2; i<stxs.size(); ++i) new_exps.push_back(syntax_To_Expr(stxs[i], func_env));
-                            Expr new_body = new_exps[0];
-                            if(new_exps.size() > 1) new_body = Expr(new Begin(new_exps));
-                            //create a new lambda and package it with Define
-                            Expr lambda = Expr(new Lambda(parameters, new_body));
-                            return Expr(new Define(funcName, lambda));
+                case E_DEFINE:{
+                    if (auto name = dynamic_cast<SymbolSyntax*>(stxs[1].get())) {
+                        return Expr(new Define(name->s, stxs[2]->parse(env)));
+                    } else if (auto fnlist = dynamic_cast<List*>(stxs[1].get())) {
+                        SymbolSyntax *fname = dynamic_cast<SymbolSyntax*>(fnlist->stxs[0].get());
+                        vector<string> params;
+                        for (size_t i = 1; i < fnlist->stxs.size(); ++i) {
+                            SymbolSyntax *sym = dynamic_cast<SymbolSyntax*>(fnlist->stxs[i].get());
+                            params.push_back(sym->s);
                         }
+                        Expr body = stxs[2]->parse(env);
+                        Expr lambda = Expr(new Lambda(params, body));
+                        return Expr(new Define(fname->s, lambda));
+                    } else {
+                        throw RuntimeError("Invalid define syntax");
                     }
                 }
-                //now it must be a variable
-                SymbolSyntax* varSym = dynamic_cast<SymbolSyntax*>(stxs[1].get());
-                if(varSym == nullptr) throw RuntimeError("Invalid variable name in Define");
-                string varName = varSym->s;
-                //if(primitives.count(varName) || reserved_words.count(varName)) throw RuntimeError("Define: cannot redefine primitive or reserved word");
-                Expr expr=syntax_To_Expr(stxs[2],env);//size=3
-                if(stxs.size() > 3)
-                {
-                    vector<Expr> exprs;
-                    for(size_t i=2; i<stxs.size(); ++i) exprs.push_back(syntax_To_Expr(stxs[i],env));
-                    expr = Expr(new Begin(exprs));
-                }
-                return Expr(new Define(varName, expr));
-            }
+                // case E_DEFINE:
+                // {
+                //     Value match_value = find("define", env);
+                //     if(match_value.get() != nullptr)
+                //     {
+                //         vector<Expr> args;
+                //         for(size_t i = 1; i < stxs.size(); ++i) args.push_back(syntax_To_Expr(stxs[i], env));
+                //         return Expr(new Apply(new Var("define"), args));
+                //     }
+                //     if(stxs.size() < 3) throw RuntimeError("Wrong number of arguments for define");
+                //     //check if it is the simple form of function(name)
+                //     if(auto lst = dynamic_cast<List*>(stxs[1].get()))
+                //     {
+                //         if(!lst->stxs.empty())
+                //         {
+                //             if(SymbolSyntax* funcNameSym = dynamic_cast<SymbolSyntax*>(lst->stxs[0].get()))
+                //             {
+                //                 string funcName = funcNameSym->s;
+                //                 vector<string> parameters;
+                //                 for(size_t i=1; i<lst->stxs.size(); ++i) {
+                //                     SymbolSyntax* paramSym = dynamic_cast<SymbolSyntax*>(lst->stxs[i].get());
+                //                     if (paramSym != nullptr) parameters.push_back(paramSym->s);
+                //                     else throw RuntimeError("Invalid parameter in function definition");
+                //                 }
+
+                //                 // ⚠️ 不要在 parser 阶段 extend 环境
+                //                 vector<Expr> new_exps;
+                //                 for(size_t i=2; i<stxs.size(); ++i)
+                //                     new_exps.push_back(syntax_To_Expr(stxs[i], env));
+
+                //                 Expr new_body = new_exps[0];
+                //                 if(new_exps.size() > 1)
+                //                     new_body = Expr(new Begin(new_exps));
+
+                //                 Expr lambda = Expr(new Lambda(parameters, new_body));
+                //                 return Expr(new Define(funcName, lambda));
+                //             }
+                //         }
+                //     }
+
+                //     //now it must be a variable
+                //     SymbolSyntax* varSym = dynamic_cast<SymbolSyntax*>(stxs[1].get());
+                //     if(varSym == nullptr) throw RuntimeError("Invalid variable name in Define");
+                //     string varName = varSym->s;
+                //     //if(primitives.count(varName) || reserved_words.count(varName)) throw RuntimeError("Define: cannot redefine primitive or reserved word");
+                //     Expr expr=syntax_To_Expr(stxs[2],env);//size=3
+                //     if(stxs.size() > 3)
+                //     {
+                //         vector<Expr> exprs;
+                //         for(size_t i=2; i<stxs.size(); ++i) exprs.push_back(syntax_To_Expr(stxs[i],env));
+                //         expr = Expr(new Begin(exprs));
+                //     }
+                //     return Expr(new Define(varName, expr));
+                // }
+                // case E_DEFINE: {
+                //     // (define <var> <expr>)
+                //     // (define <func> (lambda (<parm1> <parm2> ...) <expr1> <expr2> ...))
+                //     // (define (<func> <parm1> <parm2> ...) <expr1> <expr2> ...)
+
+                //     if (stxs.size() < 3) {
+                //         throw RuntimeError("define: too few arguments");
+                //     }
+
+                //     auto func_list = dynamic_cast<List*>(stxs[1].get());
+                //     // (define (<func> <parm1> <parm2> ...) <expr1> <expr2> ...)
+                //     if (func_list != nullptr) {
+                //         if (func_list->stxs.empty()) {
+                //             throw RuntimeError("define: function name missing");
+                //         }
+                        
+                //         auto func_name = dynamic_cast<SymbolSyntax*>(func_list->stxs[0].get());
+                //         if (func_name == nullptr) {
+                //             throw RuntimeError("define: function name must be a symbol");
+                //         }
+
+                //         std::vector<std::string> params;
+                //         for (size_t i = 1; i < func_list->stxs.size(); ++i) {
+                //             auto param = dynamic_cast<SymbolSyntax*>(func_list->stxs[i].get());
+                //             if (param == nullptr) {
+                //                 throw RuntimeError("define: parameter must be a symbol");
+                //             }
+                //             params.push_back(param->s);
+                //         }
+                //         Assoc env2 = env;
+                //         for (const auto& p : params) {
+                //             env2 = extend(p, Value(nullptr), env2);
+                //         }
+                //         std::vector<Expr> body_exprs;
+                //         for (size_t i = 2; i < stxs.size(); ++i) {
+                //             body_exprs.push_back(stxs[i]->parse(env2));
+                //         }
+                //         Expr lambda_body(nullptr);
+                //         if (body_exprs.empty()) {
+                //             lambda_body = Expr(new MakeVoid());
+                //         } else if (body_exprs.size() == 1){
+                //             lambda_body = body_exprs[0];
+                //         } else {
+                //             lambda_body = Expr(new Begin(body_exprs));
+                //         }
+
+                //         Expr lambda_expr = Expr(new Lambda(params, lambda_body));
+                        
+                //         return Expr(new Define(func_name->s, lambda_expr));
+                //     } else {
+                //         // (define var expr) or (define <func> (lambda ...))
+                //         auto var_name = dynamic_cast<SymbolSyntax*>(stxs[1].get());
+                //         if (var_name == nullptr) {
+                //             throw RuntimeError("define: variable of function name must be a symbol");
+                //         }
+                //         return Expr(new Define(var_name->s, stxs[2]->parse(env)));
+                //     }
+                    
+                // }
                 case E_BEGIN:{
                     vector<Expr> exprs;
                     for(int i=1;i<stxs.size();i++)

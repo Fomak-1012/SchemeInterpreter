@@ -833,24 +833,99 @@ Value Apply::eval(Assoc &env) {
 }
 
 
-Value Define::eval(Assoc &env) {
-    //TODO: To complete the define logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
-    Lambda *lambda_expr = dynamic_cast<Lambda*>(e.get());
-    Value val=NullV();
-    if (lambda_expr) {
-        val = ProcedureV(lambda_expr->x, lambda_expr->e, env);
-        // 把函数自己绑定进自身环境实现递归
-        val->v_type = V_PROC;
-        Procedure *proc = dynamic_cast<Procedure*>(val.get());
-        proc->env = extend(var, val, proc->env);
-    } else {
-        val = e->eval(env);
-    }
-    env = extend(var, val, env);
-    return VoidV();
+// Value Define::eval(Assoc &env) {
+//     //TODO: To complete the define logic
+//     //std::cerr << "调用一次：" << __func__ << std::endl;
+//     Lambda *lambda_expr = dynamic_cast<Lambda*>(e.get());
+//     Value val=NullV();
+//     if (lambda_expr) {
+//         val = ProcedureV(lambda_expr->x, lambda_expr->e, env);
+//         // 把函数自己绑定进自身环境实现递归
+//         val->v_type = V_PROC;
+//         Procedure *proc = dynamic_cast<Procedure*>(val.get());
+//         proc->env = extend(var, val, proc->env);
+//     } else {
+//         val = e->eval(env);
+//     }
+//     env = extend(var, val, env);
+//     return VoidV();
     
+// }
+
+// Value Define::eval(Assoc &env) {
+//     Lambda *lambda_expr = dynamic_cast<Lambda*>(e.get());
+//     Value val = NullV();
+
+//     if (lambda_expr) {
+//         // 创建闭包并捕获当前环境
+//         val = ProcedureV(lambda_expr->x, lambda_expr->e, env);
+//         Procedure *proc = dynamic_cast<Procedure*>(val.get());
+//         // 支持递归：闭包中包含自己
+//         proc->env = extend(var, val, proc->env);
+//     } else {
+//         val = e->eval(env);
+//     }
+
+//     // 已存在则修改，否则扩展
+//     Value old = find(var, env);
+//     if (old.get() != nullptr)
+//         modify(var, val, env);
+//     else
+//         env = extend(var, val, env);
+
+//     return VoidV();
+// }
+
+void insert(const std::string &x, const Value &v, Assoc &lst) {
+    if (!lst.get()) {
+        auto head = Assoc(nullptr);
+        lst = extend(x, v, head);
+        return;
+    }
+    lst->next = extend(x, v, lst->next);
 }
+
+// Value Define::eval(Assoc &env) {
+//     Lambda *lambda_expr = dynamic_cast<Lambda*>(e.get());
+//     Value val = NullV();
+//     if (lambda_expr) {
+//         Value existing = find(var, env);
+//         if (existing.get() == nullptr) {
+//             env = extend(var, VoidV(), env);
+//         }
+//         val = ProcedureV(lambda_expr->x, lambda_expr->e, env);
+//         modify(var, val, env);
+//     } else {
+//         val = e->eval(env);
+//         Value old = find(var, env);
+//         if (old.get() != nullptr) {
+//             modify(var, val, env);
+//         } else {
+//             env = extend(var, val, env);
+//         }
+//     }
+//     return VoidV();
+// }
+
+Value Define::eval(Assoc &env){
+    Assoc newenv=env;
+    if(!newenv.get()){
+        auto head=Assoc(nullptr);
+        newenv=extend(var,Value(nullptr),newenv);
+    }
+    else newenv->next=extend(var,Value(nullptr),newenv->next);
+    modify(var,e->eval(newenv),newenv);
+    env=newenv;
+    return VoidV();
+}
+
+// Value Define::eval(Assoc &env) {
+//     Assoc rec_env = env;
+//     insert(var, Value(nullptr), rec_env);
+//     modify(var, e->eval(rec_env), rec_env);
+//     env = rec_env;
+//     return VoidV();
+// }
 
 Value Let::eval(Assoc &env) {
     //TODO: To complete the let logic
