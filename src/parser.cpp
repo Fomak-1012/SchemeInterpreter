@@ -56,7 +56,7 @@ Expr FalseSyntax::parse(Assoc &env) {
     return Expr(new False());
 }
 
-Expr syntax_To_Expr(const Syntax &s,Assoc &env)
+Expr syntaxtoExpr(const Syntax &s,Assoc &env)
 {
     if (auto num = dynamic_cast<Number*>(s.get())) {
         return Expr(new Fixnum(num->n));
@@ -84,7 +84,7 @@ Expr List::parse(Assoc &env) {
     //If not, use Apply function to package to a closure;
     //If so, find whether it's a variable or a keyword;
     SymbolSyntax *id = dynamic_cast<SymbolSyntax*>(stxs[0].get());
-    //检查是否为关键字
+    //检查是否为符号
     if (id == nullptr) {//若不是，就用Apply
         //TODO: TO COMPLETE THE LOGIC
         Expr rator=stxs[0]->parse(env);
@@ -202,18 +202,6 @@ Expr List::parse(Assoc &env) {
                 if(parameters.size()!=1)
                     throw RuntimeError("Wrong number of not");
                 return Expr(new Not(parameters[0]));
-            // } else if (op_type == E_CONS){
-            //     if(parameters.size()!=2)
-            //         throw RuntimeError("Wrong grammar of cons");
-            //     return Expr(new Cons(parameters[0],parameters[1]));
-            // } else if (op_type == E_CAR){
-            //     if(parameters.size()!=1)
-            //         throw RuntimeError("Wrong number of car");
-            //     return Expr(new Car(parameters[0]));
-            // } else if (op_type == E_CDR){
-            //     if(parameters.size()!=1)
-            //         throw RuntimeError("Wrong number of cdr");
-            //     return Expr(new Cdr(parameters[0]));
             }else if (op_type == E_CAR) {
                 if (parameters.size() == 1) {
                     return Expr(new Car(parameters[0]));
@@ -312,7 +300,6 @@ Expr List::parse(Assoc &env) {
             } else {
                 //TODO: TO COMPLETE THE LOGIC
                 throw RuntimeError("Unknown primitives: "+op);
-                // throw RuntimeError("没得这个函数,你再看看呢: "+op);
             } 
         }
         //预留关键字这一块
@@ -321,28 +308,18 @@ Expr List::parse(Assoc &env) {
                 //TODO: TO COMPLETE THE reserve_words PARSER LOGIC
                 case E_IF:{
                     if(stxs.size()!=4){
-                        // throw RuntimeError("你看看你的if语法写对了吗");
                         throw RuntimeError("Wrong Grammar of If");
                     }
                     return Expr(new If(stxs[1]->parse(env),stxs[2]->parse(env),stxs[3]->parse(env)));
                 }
-                // case E_LAMBDA:{
-                //     List *parmlist=dynamic_cast<List*>(stxs[1].get());
-                //     vector<string>parms;
-                //     for(auto &it:parmlist->stxs){
-                //         SymbolSyntax *sym=dynamic_cast<SymbolSyntax*>(it.get());
-                //         //注意这里可能有报错
-                //         parms.push_back(sym->s);
-                //     }
-                //     if(stxs.size()>3){
-                //         vector<Expr> body;
-                //         for(int i=2;i<stxs.size();i++)
-                //             body.push_back(stxs[i]->parse(env));
-                //         return Expr(new Lambda(parms,Expr(new Begin(body))));
-                //     }
-                //     return Expr(new Lambda(parms,stxs[2]->parse(env)));
-                // }    
-
+                /*
+                关于lambda的操作方式:
+                实际上我们只传进来3个东西:lambda 参数表 函数体(运算结构)
+                所以我们将参数表(一个字符串数组记作parms)传进一页新开的变量表new_env
+                由于此时是变量所以我们用0为各变量赋初值
+                然后看有几个表达式, 如果只有一个,直接算就行
+                                  如果有多个,就用begin打包       
+                */
                 case E_LAMBDA: {
                     if(stxs.size() < 3) {
                         throw RuntimeError("Wrong number of arguments for lambda");
@@ -383,77 +360,6 @@ Expr List::parse(Assoc &env) {
                     if(stxs.size()==2)return Expr(new Quote(stxs[1]));
                     else throw RuntimeError("Wrong number of arguments for quote");
                 }
-                // case E_DEFINE:{
-                //     if (auto name = dynamic_cast<SymbolSyntax*>(stxs[1].get())) {
-                //         return Expr(new Define(name->s, stxs[2]->parse(env)));
-                //     } else if (auto fnlist = dynamic_cast<List*>(stxs[1].get())) {
-                //         SymbolSyntax *fname = dynamic_cast<SymbolSyntax*>(fnlist->stxs[0].get());
-                //         vector<string> params;
-                //         for (size_t i = 1; i < fnlist->stxs.size(); ++i) {
-                //             SymbolSyntax *sym = dynamic_cast<SymbolSyntax*>(fnlist->stxs[i].get());
-                //             params.push_back(sym->s);
-                //         }
-                //         Expr body = stxs[2]->parse(env);
-                //         Expr lambda = Expr(new Lambda(params, body));
-                //         return Expr(new Define(fname->s, lambda));
-                //     } else {
-                //         throw RuntimeError("Invalid define syntax");
-                //     }
-                // }
-                // case E_DEFINE:
-                // {
-                //     Value match_value = find("define", env);
-                //     if(match_value.get() != nullptr)
-                //     {
-                //         vector<Expr> args;
-                //         for(size_t i = 1; i < stxs.size(); ++i) args.push_back(syntax_To_Expr(stxs[i], env));
-                //         return Expr(new Apply(new Var("define"), args));
-                //     }
-                //     if(stxs.size() < 3) throw RuntimeError("Wrong number of arguments for define");
-                //     //check if it is the simple form of function(name)
-                //     if(auto lst = dynamic_cast<List*>(stxs[1].get()))
-                //     {
-                //         if(!lst->stxs.empty())
-                //         {
-                //             if(SymbolSyntax* funcNameSym = dynamic_cast<SymbolSyntax*>(lst->stxs[0].get()))
-                //             {
-                //                 string funcName = funcNameSym->s;
-                //                 vector<string> parameters;
-                //                 for(size_t i=1; i<lst->stxs.size(); ++i) {
-                //                     SymbolSyntax* paramSym = dynamic_cast<SymbolSyntax*>(lst->stxs[i].get());
-                //                     if (paramSym != nullptr) parameters.push_back(paramSym->s);
-                //                     else throw RuntimeError("Invalid parameter in function definition");
-                //                 }
-
-                //                 // ⚠️ 不要在 parser 阶段 extend 环境
-                //                 vector<Expr> new_exps;
-                //                 for(size_t i=2; i<stxs.size(); ++i)
-                //                     new_exps.push_back(syntax_To_Expr(stxs[i], env));
-
-                //                 Expr new_body = new_exps[0];
-                //                 if(new_exps.size() > 1)
-                //                     new_body = Expr(new Begin(new_exps));
-
-                //                 Expr lambda = Expr(new Lambda(parameters, new_body));
-                //                 return Expr(new Define(funcName, lambda));
-                //             }
-                //         }
-                //     }
-
-                //     //now it must be a variable
-                //     SymbolSyntax* varSym = dynamic_cast<SymbolSyntax*>(stxs[1].get());
-                //     if(varSym == nullptr) throw RuntimeError("Invalid variable name in Define");
-                //     string varName = varSym->s;
-                //     //if(primitives.count(varName) || reserved_words.count(varName)) throw RuntimeError("Define: cannot redefine primitive or reserved word");
-                //     Expr expr=syntax_To_Expr(stxs[2],env);//size=3
-                //     if(stxs.size() > 3)
-                //     {
-                //         vector<Expr> exprs;
-                //         for(size_t i=2; i<stxs.size(); ++i) exprs.push_back(syntax_To_Expr(stxs[i],env));
-                //         expr = Expr(new Begin(exprs));
-                //     }
-                //     return Expr(new Define(varName, expr));
-                // }
                 case E_DEFINE: {
                     // (define <var> <expr>)
                     // (define <func> (lambda (<parm1> <parm2> ...) <expr1> <expr2> ...))
@@ -462,19 +368,23 @@ Expr List::parse(Assoc &env) {
                     if (stxs.size() < 3) {
                         throw RuntimeError("define: too few arguments");
                     }
-
                     auto func_list = dynamic_cast<List*>(stxs[1].get());
                     // (define (<func> <parm1> <parm2> ...) <expr1> <expr2> ...)
+
+                    /*
+                    这个就是把lambda省略了,直接给到参数表和函数体,需要我们把它转出来
+                                        见lambda操作即可
+                                        只是多一步把这个lambda命个名
+                    */
+
                     if (func_list != nullptr) {
                         if (func_list->stxs.empty()) {
                             throw RuntimeError("define: function name missing");
                         }
-                        
                         auto func_name = dynamic_cast<SymbolSyntax*>(func_list->stxs[0].get());
                         if (func_name == nullptr) {
                             throw RuntimeError("define: function name must be a symbol");
                         }
-
                         std::vector<std::string> params;
                         for (size_t i = 1; i < func_list->stxs.size(); ++i) {
                             auto param = dynamic_cast<SymbolSyntax*>(func_list->stxs[i].get());
@@ -504,7 +414,10 @@ Expr List::parse(Assoc &env) {
                         
                         return Expr(new Define(func_name->s, lambda_expr));
                     } else {
-                        // (define var expr) or (define <func> (lambda ...))
+                        /*
+                        这个就是1.给变量赋个值
+                               2.给函数命个名
+                        */
                         auto var_name = dynamic_cast<SymbolSyntax*>(stxs[1].get());
                         if (var_name == nullptr) {
                             throw RuntimeError("define: variable of function name must be a symbol");
@@ -519,122 +432,147 @@ Expr List::parse(Assoc &env) {
                         exprs.push_back(stxs[i]->parse(env));
                     return Expr(new Begin(exprs));
                 }
+                /*
+                cond很简单:把每一行拆出来就行
+                          主要还是看evaluation怎么处理
+                */
                 case E_COND:{
-                if(stxs.size()<=1)throw RuntimeError("Invalid cond clause");
-                vector<vector<Expr>> clauses;
-                for(int i = 1; i < stxs.size(); i++) {
-                    List *clause = dynamic_cast<List*>(stxs[i].get());
-                    if (!clause || clause->stxs.empty()) {
-                        throw RuntimeError("Invalid cond clause");
-                    }
-                    vector<Expr> clause_exprs;
-                    for(auto &expr : clause->stxs)
-                        clause_exprs.push_back(expr->parse(env));                        
+                    if(stxs.size()<=1)throw RuntimeError("Invalid cond clause");
+                    vector<vector<Expr>> clauses;
+                    for(int i = 1; i < stxs.size(); i++) {
+                        List *clause = dynamic_cast<List*>(stxs[i].get());
+                        if (!clause || clause->stxs.empty()) {
+                            throw RuntimeError("Invalid cond clause");
+                        }
+                        vector<Expr> clause_exprs;
+                        for(auto &expr : clause->stxs)
+                            clause_exprs.push_back(expr->parse(env));                        
                         clauses.push_back(clause_exprs);
-                }
-                    return Expr(new Cond(clauses));
-            }
-            case E_LET:{
-                if(stxs.size() < 3) {
-                    throw RuntimeError("Wrong number of arguments for let");
-                }
-                List *bindings = dynamic_cast<List*>(stxs[1].get());
-                if (!bindings) {
-                    throw RuntimeError("Let bindings must be a list");
-                }
-                
-                // 创建新的环境，先复制当前环境
-                Assoc new_env = env;
-                vector<pair<string, Expr>> let_bindings;
-                
-                // 第一步：先解析所有绑定表达式（使用旧环境）
-                for(auto &binding : bindings->stxs) {
-                    List *binding_pair = dynamic_cast<List*>(binding.get());
-                    if (!binding_pair || binding_pair->stxs.size() != 2) {
-                        throw RuntimeError("Invalid binding in let");
                     }
-                    SymbolSyntax *var = dynamic_cast<SymbolSyntax*>(binding_pair->stxs[0].get());
-                    if (!var) {
-                        throw RuntimeError("Binding variable must be a symbol");
-                    }
-                    
-                    // 使用当前环境解析绑定值
-                    Expr value_expr = binding_pair->stxs[1]->parse(env);
-                    let_bindings.push_back({var->s, value_expr});
-                    
-                    // 将变量名添加到新环境中（使用一个占位符值）
-                    // 这样在解析let体时，这个符号就会被识别为变量而不是关键字
-                    new_env = extend(var->s, IntegerV(0), new_env);
+                        return Expr(new Cond(clauses));
                 }
-                
-                // 第二步：使用新环境解析body
-                if (stxs.size() > 3) {
-                    vector<Expr> body_exprs;
-                    for(size_t i = 2; i < stxs.size(); i++) {
-                        body_exprs.push_back(stxs[i]->parse(new_env));
-                    }
-                    return Expr(new Let(let_bindings, Expr(new Begin(body_exprs))));
-                } else {
-                    return Expr(new Let(let_bindings, stxs[2]->parse(new_env)));
-                }
-            }
+                /*
+                let和letrec比之define就友好多了
+                区别也不大:letrec允许使用未定义完毕的变量,而let不允许
+                e.g. (let ((a (+ 1 2)) (b (+ 3 4)))
+                        (* a b))
+                      (let ((a (+ 1 2)) (b (+ a 4)))
+                        (* a b))  
 
-            case E_LETREC:{
-                if(stxs.size() < 3) {
-                    throw RuntimeError("Wrong number of arguments for letrec");
-                }
-                List *bindings = dynamic_cast<List*>(stxs[1].get());
-                if (!bindings) {
-                    throw RuntimeError("Letrec bindings must be a list");
-                }
-                
-                // 创建新的环境，先复制当前环境
-                Assoc new_env = env;
-                vector<pair<string, Expr>> letrec_bindings;
-                
-                // 第一步：先将所有变量名添加到新环境中
-                for(auto &binding : bindings->stxs) {
-                    List *binding_pair = dynamic_cast<List*>(binding.get());
-                    if (!binding_pair || binding_pair->stxs.size() != 2) {
-                        throw RuntimeError("Invalid binding in letrec");
+                下面是 let 和 letrec 的具体实现方式:
+                let: 
+                    先算所有变量的值,再绑定
+                    1.在原环境中把绑定表达式转化为Expr型
+                        并把变量名用占位符绑定到新环境中        
+                    2.在新环境中执行各语句
+
+                letrec:
+                    先把变量绑定到环境里,再算值 
+                    1.在新环境中绑定所有变量名
+                    2.用新环境解析绑定表达式
+                    3.在新环境中执行各语句
+                */
+                case E_LET:{
+                    if(stxs.size() < 3) {
+                        throw RuntimeError("Wrong number of arguments for let");
                     }
-                    SymbolSyntax *var = dynamic_cast<SymbolSyntax*>(binding_pair->stxs[0].get());
-                    if (!var) {
-                        throw RuntimeError("Binding variable must be a symbol");
+                    List *bindings = dynamic_cast<List*>(stxs[1].get());
+                    if (!bindings) {
+                        throw RuntimeError("Let bindings must be a list");
                     }
-                    // 先添加变量名到环境
-                    new_env = extend(var->s, IntegerV(0), new_env);
+                    
+                    // 创建新的环境，先复制当前环境
+                    Assoc new_env = env;
+                    vector<pair<string, Expr>> let_bindings;
+                    
+                    // 第一步：先解析所有绑定表达式（使用旧环境）
+                    for(auto &binding : bindings->stxs) {
+                        List *binding_pair = dynamic_cast<List*>(binding.get());
+                        if (!binding_pair || binding_pair->stxs.size() != 2) {
+                            throw RuntimeError("Invalid binding in let");
+                        }
+                        SymbolSyntax *var = dynamic_cast<SymbolSyntax*>(binding_pair->stxs[0].get());
+                        if (!var) {
+                            throw RuntimeError("Binding variable must be a symbol");
+                        }
+                        
+                        // 使用当前环境解析绑定值
+                        Expr value_expr = binding_pair->stxs[1]->parse(env);
+                        let_bindings.push_back({var->s, value_expr});
+                        
+                        // 将变量名添加到新环境中（使用一个占位符值）
+                        // 这样在解析let体时，这个符号就会被识别为变量而不是关键字
+                        new_env = extend(var->s, IntegerV(0), new_env);
+                    }
+                    
+                    // 第二步：使用新环境解析body
+                    if (stxs.size() > 3) {
+                        vector<Expr> body_exprs;
+                        for(size_t i = 2; i < stxs.size(); i++) {
+                            body_exprs.push_back(stxs[i]->parse(new_env));
+                        }
+                        return Expr(new Let(let_bindings, Expr(new Begin(body_exprs))));
+                    } else {
+                        return Expr(new Let(let_bindings, stxs[2]->parse(new_env)));
+                    }
                 }
-                
-                // 第二步：使用新环境解析绑定值
-                for(auto &binding : bindings->stxs) {
-                    List *binding_pair = dynamic_cast<List*>(binding.get());
-                    SymbolSyntax *var = dynamic_cast<SymbolSyntax*>(binding_pair->stxs[0].get());
-                    Expr value_expr = binding_pair->stxs[1]->parse(new_env);
-                    letrec_bindings.push_back({var->s, value_expr});
+
+                case E_LETREC:{
+                    if(stxs.size() < 3) {
+                        throw RuntimeError("Wrong number of arguments for letrec");
+                    }
+                    List *bindings = dynamic_cast<List*>(stxs[1].get());
+                    if (!bindings) {
+                        throw RuntimeError("Letrec bindings must be a list");
+                    }
+                    
+                    // 创建新的环境，先复制当前环境
+                    Assoc new_env = env;
+                    vector<pair<string, Expr>> letrec_bindings;
+                    
+                    // 第一步：先将所有变量名添加到新环境中
+                    for(auto &binding : bindings->stxs) {
+                        List *binding_pair = dynamic_cast<List*>(binding.get());
+                        if (!binding_pair || binding_pair->stxs.size() != 2) {
+                            throw RuntimeError("Invalid binding in letrec");
+                        }
+                        SymbolSyntax *var = dynamic_cast<SymbolSyntax*>(binding_pair->stxs[0].get());
+                        if (!var) {
+                            throw RuntimeError("Binding variable must be a symbol");
+                        }
+                        // 先添加变量名到环境
+                        new_env = extend(var->s, IntegerV(0), new_env);
+                    }
+                    
+                    // 第二步：使用新环境解析绑定值
+                    for(auto &binding : bindings->stxs) {
+                        List *binding_pair = dynamic_cast<List*>(binding.get());
+                        SymbolSyntax *var = dynamic_cast<SymbolSyntax*>(binding_pair->stxs[0].get());
+                        Expr value_expr = binding_pair->stxs[1]->parse(new_env);
+                        letrec_bindings.push_back({var->s, value_expr});
+                    }
+                    
+                    // 第三步：使用新环境解析body
+                    if (stxs.size() > 3) {
+                        vector<Expr> body_exprs;
+                        for(size_t i = 2; i < stxs.size(); i++) {
+                            body_exprs.push_back(stxs[i]->parse(new_env));
+                        }
+                        return Expr(new Letrec(letrec_bindings, Expr(new Begin(body_exprs))));
+                    } else {
+                        return Expr(new Letrec(letrec_bindings, stxs[2]->parse(new_env)));
+                    }
                 }
-                
-                // 第三步：使用新环境解析body
-                if (stxs.size() > 3) {
-                    vector<Expr> body_exprs;
-                    for(size_t i = 2; i < stxs.size(); i++) {
-                        body_exprs.push_back(stxs[i]->parse(new_env));
-                    }
-                    return Expr(new Letrec(letrec_bindings, Expr(new Begin(body_exprs))));
-                } else {
-                    return Expr(new Letrec(letrec_bindings, stxs[2]->parse(new_env)));
+                case E_SET:{
+                    if(stxs.size() != 3) {
+                            throw RuntimeError("Wrong number of arguments for set!");
+                        }
+                        SymbolSyntax *name = dynamic_cast<SymbolSyntax*>(stxs[1].get());
+                        if (!name) {
+                            throw RuntimeError("set! must be followed by a symbol");
+                        }
+                        return Expr(new Set(name->s, stxs[2]->parse(env)));
                 }
-            }
-            case E_SET:{
-                if(stxs.size() != 3) {
-                        throw RuntimeError("Wrong number of arguments for set!");
-                    }
-                    SymbolSyntax *name = dynamic_cast<SymbolSyntax*>(stxs[1].get());
-                    if (!name) {
-                        throw RuntimeError("set! must be followed by a symbol");
-                    }
-                    return Expr(new Set(name->s, stxs[2]->parse(env)));
-            }
                 default:
                     throw RuntimeError("Unknown reserved word: " + op);
             }
@@ -647,6 +585,5 @@ Expr List::parse(Assoc &env) {
         for(int i=1;i<stxs.size();i++)
             args.push_back(stxs[i]->parse(env));
         return Expr(new Apply(rator,args));
-        
     }
 }

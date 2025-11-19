@@ -128,7 +128,6 @@ Value Var::eval(Assoc &e) { // evaluation of variable
 
 Value Plus::evalRator(const Value &rand1, const Value &rand2) { // +
     //TODO: To complete the addition logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if(rand1->v_type==V_INT&&rand2->v_type==V_INT){
         int p1=dynamic_cast<Integer*>(rand1.get())->n;
@@ -164,8 +163,7 @@ Value Plus::evalRator(const Value &rand1, const Value &rand2) { // +
 
 Value Minus::evalRator(const Value &rand1, const Value &rand2) { // -
     //TODO: To complete the substraction logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
-
+     
     if(rand1->v_type==V_INT&&rand2->v_type==V_INT){
         int p1=dynamic_cast<Integer*>(rand1.get())->n;
         int p2=dynamic_cast<Integer*>(rand2.get())->n;
@@ -200,7 +198,6 @@ Value Minus::evalRator(const Value &rand1, const Value &rand2) { // -
 
 Value Mult::evalRator(const Value &rand1, const Value &rand2) { // *
     //TODO: To complete the Multiplication logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if(rand1->v_type==V_INT&&rand2->v_type==V_INT){
         int p1=dynamic_cast<Integer*>(rand1.get())->n;
@@ -239,7 +236,6 @@ Value Mult::evalRator(const Value &rand1, const Value &rand2) { // *
 
 Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
     //TODO: To complete the dicision logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if (rand1->v_type == V_INT && rand2->v_type == V_INT) {
         int dividend = dynamic_cast<Integer*>(rand1.get())->n;
@@ -283,7 +279,6 @@ Value Div::evalRator(const Value &rand1, const Value &rand2) { // /
 }
 
 Value Modulo::evalRator(const Value &rand1, const Value &rand2) { // modulo
-    //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if (rand1->v_type == V_INT && rand2->v_type == V_INT) {
         int dividend = dynamic_cast<Integer*>(rand1.get())->n;
@@ -298,7 +293,6 @@ Value Modulo::evalRator(const Value &rand1, const Value &rand2) { // modulo
 
 Value PlusVar::evalRator(const std::vector<Value> &args) { // + with multiple args
     //TODO: To complete the addition logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if(args.empty())return IntegerV(0);
     Value tmp=args[0];
@@ -308,10 +302,8 @@ Value PlusVar::evalRator(const std::vector<Value> &args) { // + with multiple ar
     return tmp;
 }
 
-
 Value MinusVar::evalRator(const std::vector<Value> &args) { // - with multiple args
     //TODO: To complete the substraction logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if(args.empty())throw(RuntimeError("Undefined option"));
     Value tmp=args[0];
@@ -326,7 +318,6 @@ Value MinusVar::evalRator(const std::vector<Value> &args) { // - with multiple a
 
 Value MultVar::evalRator(const std::vector<Value> &args) { // * with multiple args
     //TODO: To complete the multiplication logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if(args.empty())return IntegerV(1);
     Value tmp=args[0];
@@ -337,7 +328,6 @@ Value MultVar::evalRator(const std::vector<Value> &args) { // * with multiple ar
 
 Value DivVar::evalRator(const std::vector<Value> &args) { // / with multiple args
     //TODO: To complete the divisor logic
-    //std::cerr << "调用一次：" << __func__ << std::endl;
 
     if(args.empty())throw(RuntimeError("Undefined option"));
     if(args.size()==1){
@@ -390,8 +380,6 @@ Value Expt::evalRator(const Value &rand1, const Value &rand2) { // expt
 
 //A FUNCTION TO SIMPLIFY THE COMPARISON WITH INTEGER AND RATIONAL NUMBER
 int compareNumericValues(const Value &v1, const Value &v2) {
-    //std::cerr << "调用一次：" << __func__ << std::endl;
-
     if (v1->v_type == V_INT && v2->v_type == V_INT) {
         int n1 = dynamic_cast<Integer*>(v1.get())->n;
         int n2 = dynamic_cast<Integer*>(v2.get())->n;
@@ -480,7 +468,6 @@ Value Greater::evalRator(const Value &rand1, const Value &rand2) { // >
     throw RuntimeError("Wrong typename");
 }
 
-
 Value LessVar::evalRator(const std::vector<Value> &args) { // < with multiple args
     //TODO: To complete the less logic
     for(int i=1;i<args.size();i++){
@@ -531,11 +518,6 @@ Value GreaterVar::evalRator(const std::vector<Value> &args) { // > with multiple
     return BooleanV(true);
 }
 
-// Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
-//     //TODO: To complete the cons logic
-//     return PairV(rand1,rand2);
-// }
-
 Value Cons::evalRator(const Value &rand1, const Value &rand2) { // cons
     //TODO: To complete the cons logic
     return PairV(rand1,rand2);
@@ -559,22 +541,6 @@ Value IsList::evalRator(const Value &rand) { // list?
     return BooleanV(tmp->v_type==V_NULL);
     //要么访问到空表，要么访问一列列pair后访问到空表
 }
-
-// Value Car::evalRator(const Value &rand) { // car
-//     //TODO: To complete the car logic
-//     if(rand->v_type==V_PAIR){
-//         return dynamic_cast<Pair*>(rand.get())->car;
-//     }
-//     throw(RuntimeError("Wrong typename"));
-// }
-
-// Value Cdr::evalRator(const Value &rand) { // cdr
-//     //TODO: To complete the cdr logic                                                 
-//     if(rand->v_type==V_PAIR){
-//         return dynamic_cast<Pair*>(rand.get())->cdr;
-//     }
-//     throw(RuntimeError("Wrong typename"));
-// }
 
 Value Car::evalRator(const Value &rand) { // car
     //TODO: To complete the car logic
@@ -662,7 +628,7 @@ Value Begin::eval(Assoc &e) {
     return res;
 }
 
-Value conv(const Syntax &s) {
+Value syntaxtoValue(const Syntax &s) {
     if (auto num = dynamic_cast<Number*>(s.get())) {
         return IntegerV(num->n);
     } else if (auto rat = dynamic_cast<RationalSyntax*>(s.get())) {
@@ -689,13 +655,15 @@ Value conv(const Syntax &s) {
         }
         // 不正规链表(a b . c)
         if (dot_pos != -1) {
+            // 对于点之前的内容
             // 构建car部分 (a b) - 必须是正规列表
             Value car_list = NullV();
             for (int i = dot_pos - 1; i >= 0; --i) {
-                car_list = PairV(conv(stxs[i]), car_list);
+                car_list = PairV(syntaxtoValue(stxs[i]), car_list);
             }
+            // 对于点之后的内容
             // 构建cdr部分 c
-            Value cdr = conv(stxs[dot_pos + 1]);
+            Value cdr = syntaxtoValue(stxs[dot_pos + 1]);
             // 将car部分的最后一个cdr设置为cdr
             if (car_list->v_type == V_NULL) {
                 return cdr;
@@ -714,7 +682,7 @@ Value conv(const Syntax &s) {
         }
         Value result = NullV();//正规的(a b c)
         for (int i = stxs.size() - 1; i >= 0; --i) {
-            result = PairV(conv(stxs[i]), result);
+            result = PairV(syntaxtoValue(stxs[i]), result);
         }
         return result;
     }
@@ -723,7 +691,7 @@ Value conv(const Syntax &s) {
 
 Value Quote::eval(Assoc& e) {
     //TODO: To complete the quote logic
-    return conv(s);
+    return syntaxtoValue(s);
 }
 
 Value AndVar::eval(Assoc &e) { // and with short-circuit evaluation
@@ -775,18 +743,25 @@ Value Not::evalRator(const Value &rand) {
     //非#f均为真
 }
 
+/*
+
+
+*/
 Value Cond::eval(Assoc &env) {
     //TODO: To complete the cond logic
     for(auto &clause:clauses){
         if(clause.empty())continue;
         bool isElse=false;
-        if(auto varx=dynamic_cast<Var*>(clause[0].get()))
-            if(varx->x=="else")isElse=true;
+        if(auto varx=dynamic_cast<Var*>(clause[0].get())){
+            if(varx->x=="else"){
+                isElse=true;
+            }
+        }
         Value testVal=isElse?BooleanV(true):clause[0]->eval(env);
         bool condTrue=true;
-        if(testVal->v_type==V_BOOL)
+        if(testVal->v_type==V_BOOL){
             condTrue=dynamic_cast<Boolean*>(testVal.get())->b;
-
+        }
         if(condTrue){
             Value result=VoidV();
             for(int i=1;i<clause.size();i++) {
@@ -798,6 +773,12 @@ Value Cond::eval(Assoc &env) {
     return VoidV();
 }
 
+/*
+关于闭包你应该知道的一些东西：
+1.extend(var,val,env):在变量表env里新增一页"var=val"
+2.modify(var,val,env):在变量表env里将var的值绑定为val
+*/
+
 Value Lambda::eval(Assoc &env) { 
     //TODO: To complete the lambda logic
     return ProcedureV(x,e,env);
@@ -808,7 +789,7 @@ Value Apply::eval(Assoc &env) {
     if (proc_val->v_type != V_PROC) {
         throw RuntimeError("Attempt to apply a non-procedure");
     }
-
+    
     Procedure* proc = dynamic_cast<Procedure*>(proc_val.get());
     std::vector<Value> arg_vals;
     
@@ -832,80 +813,16 @@ Value Apply::eval(Assoc &env) {
     return proc->e->eval(new_env);
 }
 
-
-// Value Define::eval(Assoc &env) {
-//     //TODO: To complete the define logic
-//     //std::cerr << "调用一次：" << __func__ << std::endl;
-//     Lambda *lambda_expr = dynamic_cast<Lambda*>(e.get());
-//     Value val=NullV();
-//     if (lambda_expr) {
-//         val = ProcedureV(lambda_expr->x, lambda_expr->e, env);
-//         // 把函数自己绑定进自身环境实现递归
-//         val->v_type = V_PROC;
-//         Procedure *proc = dynamic_cast<Procedure*>(val.get());
-//         proc->env = extend(var, val, proc->env);
-//     } else {
-//         val = e->eval(env);
-//     }
-//     env = extend(var, val, env);
-//     return VoidV();
-    
-// }
-
-// Value Define::eval(Assoc &env) {
-//     Lambda *lambda_expr = dynamic_cast<Lambda*>(e.get());
-//     Value val = NullV();
-
-//     if (lambda_expr) {
-//         // 创建闭包并捕获当前环境
-//         val = ProcedureV(lambda_expr->x, lambda_expr->e, env);
-//         Procedure *proc = dynamic_cast<Procedure*>(val.get());
-//         // 支持递归：闭包中包含自己
-//         proc->env = extend(var, val, proc->env);
-//     } else {
-//         val = e->eval(env);
-//     }
-
-//     // 已存在则修改，否则扩展
-//     Value old = find(var, env);
-//     if (old.get() != nullptr)
-//         modify(var, val, env);
-//     else
-//         env = extend(var, val, env);
-
-//     return VoidV();
-// }
-
-void insert(const std::string &x, const Value &v, Assoc &lst) {
-    if (!lst.get()) {
-        auto head = Assoc(nullptr);
-        lst = extend(x, v, head);
-        return;
-    }
-    lst->next = extend(x, v, lst->next);
-}
-
-// Value Define::eval(Assoc &env) {
-//     Lambda *lambda_expr = dynamic_cast<Lambda*>(e.get());
-//     Value val = NullV();
-//     if (lambda_expr) {
-//         Value existing = find(var, env);
-//         if (existing.get() == nullptr) {
-//             env = extend(var, VoidV(), env);
-//         }
-//         val = ProcedureV(lambda_expr->x, lambda_expr->e, env);
-//         modify(var, val, env);
-//     } else {
-//         val = e->eval(env);
-//         Value old = find(var, env);
-//         if (old.get() != nullptr) {
-//             modify(var, val, env);
-//         } else {
-//             env = extend(var, val, env);
-//         }
-//     }
-//     return VoidV();
-// }
+/*
+关于define,我们有两种基本操作:
+1.给变量起名:
+    例如:(define x 5)
+2.给函数起名：
+    例如:(define (add1 x) (+ x 1))
+    而实际上,这个其实是一个语法糖,其本质与
+        (define add1 (lambda (x) (+ x 1)))一模一样
+    所以对于define,我们只需要把 add1 与 (lambda (x) (+ x 1)) 绑定即可
+*/
 
 Value Define::eval(Assoc &env){
     Assoc newenv=env;
@@ -918,14 +835,6 @@ Value Define::eval(Assoc &env){
     env=newenv;
     return VoidV();
 }
-
-// Value Define::eval(Assoc &env) {
-//     Assoc rec_env = env;
-//     insert(var, Value(nullptr), rec_env);
-//     modify(var, e->eval(rec_env), rec_env);
-//     env = rec_env;
-//     return VoidV();
-// }
 
 Value Let::eval(Assoc &env) {
     //TODO: To complete the let logic
@@ -940,12 +849,12 @@ Value Let::eval(Assoc &env) {
 Value Letrec::eval(Assoc &env) {
     //TODO: To complete the letrec logic
     Assoc newenv=env;
+    //这一步就是先绑定变量名
     for(auto &it:bind)
         newenv=extend(it.first,VoidV(),newenv);
     for(auto &it:bind){
         Value val=it.second->eval(newenv);
         modify(it.first,val,newenv);
-
     }
     return body->eval(newenv);
 }
