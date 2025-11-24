@@ -151,7 +151,7 @@ Expr List::parse(Assoc &env) {
                 } else {
                     throw RuntimeError("Wrong number of arguments for expt");
                 }
-            }else if (op_type == E_LIST) {
+            } else if (op_type == E_LIST) {
                 return Expr(new ListFunc(parameters));
             } else if (op_type == E_LT) {
                 //TODO: TO COMPLETE THE LOGIC
@@ -361,70 +361,79 @@ Expr List::parse(Assoc &env) {
                     else throw RuntimeError("Wrong number of arguments for quote");
                 }
                 case E_DEFINE: {
-                    // (define <var> <expr>)
-                    // (define <func> (lambda (<parm1> <parm2> ...) <expr1> <expr2> ...))
-                    // (define (<func> <parm1> <parm2> ...) <expr1> <expr2> ...)
-
                     if (stxs.size() < 3) {
                         throw RuntimeError("define: too few arguments");
                     }
-                    auto func_list = dynamic_cast<List*>(stxs[1].get());
-                    // (define (<func> <parm1> <parm2> ...) <expr1> <expr2> ...)
 
-                    /*
-                    这个就是把lambda省略了,直接给到参数表和函数体,需要我们把它转出来
-                                        见lambda操作即可
-                                        只是多一步把这个lambda命个名
-                    */
+                    // 检查第一个参数是否是列表形式
+                    auto func_def_list = dynamic_cast<List*>(stxs[1].get());
+                    
+                    if (func_def_list != nullptr) {
+                        // 这个就是把lambda省略了,直接给到参数表和函数体,需要我们把它转出来
+                        // 见lambda操作即可
+                        // 只是多一步把这个lambda命个名
+                        // 可恶的语法糖
 
-                    if (func_list != nullptr) {
-                        if (func_list->stxs.empty()) {
+                        if (func_def_list->stxs.empty()) {
                             throw RuntimeError("define: function name missing");
                         }
-                        auto func_name = dynamic_cast<SymbolSyntax*>(func_list->stxs[0].get());
-                        if (func_name == nullptr) {
+                        
+                        auto name_symbol = dynamic_cast<SymbolSyntax*>(func_def_list->stxs[0].get());
+                        if (name_symbol == nullptr) {
                             throw RuntimeError("define: function name must be a symbol");
                         }
-                        std::vector<std::string> params;
-                        for (size_t i = 1; i < func_list->stxs.size(); ++i) {
-                            auto param = dynamic_cast<SymbolSyntax*>(func_list->stxs[i].get());
-                            if (param == nullptr) {
+                        
+                        // 收集参数列表
+                        std::vector<std::string> param_list;
+                        unsigned int param_index = 1;
+                        while (param_index < func_def_list->stxs.size()) {
+                            auto param_sym = dynamic_cast<SymbolSyntax*>(func_def_list->stxs[param_index].get());
+                            if (param_sym == nullptr) {
                                 throw RuntimeError("define: parameter must be a symbol");
                             }
-                            params.push_back(param->s);
+                            param_list.push_back(param_sym->s);
+                            param_index++;
                         }
-                        Assoc env2 = env;
-                        for (const auto& p : params) {
-                            env2 = extend(p, Value(nullptr), env2);
-                        }
-                        std::vector<Expr> body_exprs;
-                        for (size_t i = 2; i < stxs.size(); ++i) {
-                            body_exprs.push_back(stxs[i]->parse(env2));
-                        }
-                        Expr lambda_body(nullptr);
-                        if (body_exprs.empty()) {
-                            lambda_body = Expr(new MakeVoid());
-                        } else if (body_exprs.size() == 1){
-                            lambda_body = body_exprs[0];
-                        } else {
-                            lambda_body = Expr(new Begin(body_exprs));
-                        }
-
-                        Expr lambda_expr = Expr(new Lambda(params, lambda_body));
                         
-                        return Expr(new Define(func_name->s, lambda_expr));
+                        // 创建扩展环境
+                        Assoc local_env = env;
+                        for (const auto& pname : param_list) {
+                            local_env = extend(pname, Value(nullptr), local_env);
+                        }
+                        
+                        // 解析函数体
+                        std::vector<Expr> expr_list;
+                        size_t body_start = 2;
+                        for (size_t i = body_start; i < stxs.size(); i++) {
+                            expr_list.push_back(stxs[i]->parse(local_env));
+                        }
+                        
+                        // 构建函数体表达式
+                        Expr body_expr(nullptr);
+                        if (expr_list.empty()) {
+                            body_expr = Expr(new MakeVoid());
+                        } else if (expr_list.size() == 1) {
+                            body_expr = expr_list[0];
+                        } else {
+                            body_expr = Expr(new Begin(expr_list));
+                        }
+                        
+                        // 创建lambda表达式
+                        Expr lambda_def = Expr(new Lambda(param_list, body_expr));
+                        
+                        return Expr(new Define(name_symbol->s, lambda_def));
+                        
                     } else {
-                        /*
-                        这个就是1.给变量赋个值
-                               2.给函数命个名
-                        */
-                        auto var_name = dynamic_cast<SymbolSyntax*>(stxs[1].get());
-                        if (var_name == nullptr) {
+                        // 这个就是1.给变量赋个值
+                        //        2.给函数命个名
+                        
+                        auto sym_name = dynamic_cast<SymbolSyntax*>(stxs[1].get());
+                        if (sym_name == nullptr) {
                             throw RuntimeError("define: variable of function name must be a symbol");
                         }
-                        return Expr(new Define(var_name->s, stxs[2]->parse(env)));
+                        
+                        return Expr(new Define(sym_name->s, stxs[2]->parse(env)));
                     }
-                    
                 }
                 case E_BEGIN:{
                     vector<Expr> exprs;
